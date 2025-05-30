@@ -1,0 +1,89 @@
+{
+    "Title": "인구학적 정보",
+    "Description": "자신의 기본 정보를 입력해주세요.",
+    "Questions": [
+
+    {
+        "id": "hospital_id",
+        "question": "병록번호",
+        "type": "number",
+        "required": false
+      },
+    {
+      "id": "name",
+      "question": "이름",
+      "type": "text",
+      "required": true
+    },
+    {
+      "id": "gender",
+      "question": "성별",
+      "type": "radio",
+      "required": true,
+      "options": ["남", "여"]
+    },
+    {
+      "id": "marital_status",
+      "question": "결혼상태",
+      "type": "radio",
+      "required": false,
+      "options": ["미혼", "동거", "기혼", "별거", "이혼", "사별"]
+    },
+    {
+      "id": "birth_year",
+      "question": "출생년도",
+      "type": "date",
+      "required": true
+    },
+    {
+      "id": "education",
+      "question": "최종학력",
+      "type": "radio",
+      "required": false,
+      "options": [
+        "무학",
+        "초등졸업(6년)",
+        "중등졸업(9년)",
+        "고등졸업(12년)",
+        "대졸(2-3년)",
+        "대졸(4년)",
+        "대학원 이상"
+      ]
+    },
+    {
+      "id": "religion",
+      "question": "종교",
+      "type": "radio",
+      "required": false,
+      "options": ["기독교", "천주교", "불교", "기타", "종교 없음"]
+    },
+    {
+      "id": "employment_status",
+      "question": "취업여부",
+      "type": "checkbox",
+      "required": false,
+      "options": [
+        "취업(Full-time)",
+        "아르바이트(Part-time)",
+        "무직",
+        "학생",
+        "휴직/육아/병가",
+        "기타"
+      ]
+    },
+    {
+      "id": "living_condition",
+      "question": "거주 형태",
+      "type": "radio",
+      "required": false,
+      "options": [
+        "독거",
+        "부모와 동거",
+        "배우자, 자녀와 동거",
+        "지인 혹은 타인과 동거",
+        "요양시설/시설 등 거주",
+        "기타"
+      ]
+    }
+  ]
+}
