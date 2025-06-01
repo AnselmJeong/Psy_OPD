@@ -1,0 +1,139 @@
+{
+  "pages": [
+    {
+      "name": "past_history",
+      "title": "과거력",
+      "elements": [
+        {
+          "type": "panel",
+          "name": "personal_psychiatric_history",
+          "title": "현재 또는 과거에, 정신과를 방문하거나 심리치료 혹은 상담을 받은 적이 있습니까?",
+          "elements": [
+            {
+              "type": "radiogroup",
+              "name": "personal_psychiatric_visit",
+              "title": "정신과 방문/상담 경험",
+              "choices": [
+                {
+                  "value": "yes",
+                  "text": "예"
+                },
+                {
+                  "value": "no",
+                  "text": "아니오"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "name": "personal_psychiatric_diagnosis",
+              "title": "만일 '예'라고 대답하셨다면, 병명이나 증상은 무엇이었습니까? (병명 혹은 증상)",
+              "visibleIf": "personal_psychiatric_visit == 'yes'"
+            },
+            {
+              "type": "radiogroup",
+              "name": "personal_psychiatric_medication",
+              "title": "약을 처방 받은 적이 있습니까?",
+              "description": "약 처방내역이 있다면 처방전이나 약봉토를 준비해 주십시오",
+              "visibleIf": "personal_psychiatric_visit == 'yes'",
+              "choices": [
+                {
+                  "value": "yes",
+                  "text": "예"
+                },
+                {
+                  "value": "no",
+                  "text": "아니오"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "name": "family_psychiatric_history",
+          "title": "조부모를 포함한 직계 가족 중에서 정신과를 방문하거나 치료를 받았던 사람이 있습니까?",
+          "elements": [
+            {
+              "type": "radiogroup",
+              "name": "family_psychiatric_visit",
+              "title": "가족의 정신과 방문/치료 경험",
+              "choices": [
+                {
+                  "value": "yes",
+                  "text": "예"
+                },
+                {
+                  "value": "no",
+                  "text": "아니오"
+                }
+              ]
+            },
+            {
+              "type": "checkbox",
+              "name": "family_psychiatric_relation",
+              "title": "관계(복수 선택 가능)",
+              "visibleIf": "family_psychiatric_visit == 'yes'",
+              "choices": [
+                {
+                  "value": "father",
+                  "text": "아버지"
+                },
+                {
+                  "value": "mother",
+                  "text": "어머니"
+                },
+                {
+                  "value": "child",
+                  "text": "자녀"
+                },
+                {
+                  "value": "sibling",
+                  "text": "친형제 혹은 친자매"
+                },
+                {
+                  "value": "relative",
+                  "text": "사촌 이내의 친척"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "name": "family_psychiatric_diagnosis",
+              "title": "병명 혹은 증상 (여러 명일 경우 모두 기입)",
+              "visibleIf": "family_psychiatric_visit == 'yes'"
+            }
+          ]
+        },
+        {
+          "type": "panel",
+          "name": "medical_history",
+          "title": "과거에 병, 의원에서 의사로부터 질병으로 진단을 받은 것이 있습니까?",
+          "elements": [
+            {
+              "type": "radiogroup",
+              "name": "medical_diagnosis_experience",
+              "title": "진단 경험",
+              "choices": [
+                {
+                  "value": "yes",
+                  "text": "예"
+                },
+                {
+                  "value": "no",
+                  "text": "아니오"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "name": "medical_diagnosis_detail",
+              "title": "있다면 진단명을 작성해주십시오",
+              "visibleIf": "medical_diagnosis_experience == 'yes'"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

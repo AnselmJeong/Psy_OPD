@@ -1,88 +1,112 @@
 {
-    "Title": "인구학적 정보",
-    "Description": "자신의 기본 정보를 입력해주세요.",
-    "Questions": [
-
+  "pages": [
     {
-        "id": "hospital_id",
-        "question": "병록번호",
-        "type": "number",
-        "required": false
-      },
-    {
-      "id": "name",
-      "question": "이름",
-      "type": "text",
-      "required": true
-    },
-    {
-      "id": "gender",
-      "question": "성별",
-      "type": "radio",
-      "required": true,
-      "options": ["남", "여"]
-    },
-    {
-      "id": "marital_status",
-      "question": "결혼상태",
-      "type": "radio",
-      "required": false,
-      "options": ["미혼", "동거", "기혼", "별거", "이혼", "사별"]
-    },
-    {
-      "id": "birth_year",
-      "question": "출생년도",
-      "type": "date",
-      "required": true
-    },
-    {
-      "id": "education",
-      "question": "최종학력",
-      "type": "radio",
-      "required": false,
-      "options": [
-        "무학",
-        "초등졸업(6년)",
-        "중등졸업(9년)",
-        "고등졸업(12년)",
-        "대졸(2-3년)",
-        "대졸(4년)",
-        "대학원 이상"
-      ]
-    },
-    {
-      "id": "religion",
-      "question": "종교",
-      "type": "radio",
-      "required": false,
-      "options": ["기독교", "천주교", "불교", "기타", "종교 없음"]
-    },
-    {
-      "id": "employment_status",
-      "question": "취업여부",
-      "type": "checkbox",
-      "required": false,
-      "options": [
-        "취업(Full-time)",
-        "아르바이트(Part-time)",
-        "무직",
-        "학생",
-        "휴직/육아/병가",
-        "기타"
-      ]
-    },
-    {
-      "id": "living_condition",
-      "question": "거주 형태",
-      "type": "radio",
-      "required": false,
-      "options": [
-        "독거",
-        "부모와 동거",
-        "배우자, 자녀와 동거",
-        "지인 혹은 타인과 동거",
-        "요양시설/시설 등 거주",
-        "기타"
+      "name": "page1",
+      "title": "인구학적 정보",
+      "description": "자신의 기본 정보를 입력해주세요.",
+      "elements": [
+        {
+          "type": "text",
+          "name": "hospital_id",
+          "title": "병록번호",
+          "inputType": "number"
+        },
+        {
+          "type": "text",
+          "name": "name",
+          "title": "이름",
+          "isRequired": true
+        },
+        {
+          "type": "radiogroup",
+          "name": "gender",
+          "title": "성별",
+          "isRequired": true,
+          "choices": [
+            "남",
+            "여"
+          ],
+          "colCount": 2
+        },
+        {
+          "type": "radiogroup",
+          "name": "marital_status",
+          "title": "결혼상태",
+          "choices": [
+            "미혼",
+            "동거",
+            "기혼",
+            "별거",
+            "이혼",
+            "사별"
+          ],
+          "showNoneItem": true,
+          "showOtherItem": true,
+          "colCount": 2
+        },
+        {
+          "type": "text",
+          "name": "birth_date",
+          "title": "출생년도",
+          "inputType": "date",
+          "maxValueExpression": "today()",
+          "isRequired": true
+        },
+        {
+          "type": "radiogroup",
+          "name": "education",
+          "title": "최종학력",
+          "choices": [
+            "무학",
+            "초등졸업(6년)",
+            "중등졸업(9년)",
+            "고등졸업(12년)",
+            "대졸(2-3년)",
+            "대졸(4년)",
+            "대학원 이상"
+          ],
+          "colCount": 2
+        },
+        {
+          "type": "radiogroup",
+          "name": "religion",
+          "title": "종교",
+          "choices": [
+            "기독교",
+            "천주교",
+            "불교"
+          ],
+          "showNoneItem": true,
+          "showOtherItem": true
+        },
+        {
+          "type": "checkbox",
+          "name": "employment_status",
+          "title": "취업여부",
+          "choices": [
+            "취업 (Full-time)",
+            "아르바이트 (Part-time)",
+            "학생",
+            "휴직/육아/병가"
+          ],
+          "showNoneItem": true,
+          "showOtherItem": true,
+          "colCount": 2
+        },
+        {
+          "type": "radiogroup",
+          "name": "living_condition",
+          "title": "거주 형태",
+          "choices": [
+            "독거",
+            "부모와 동거",
+            "배우자, 자녀와 동거",
+            "지인 혹은 타인과 동거",
+            "요양시설/시설 등 거주"
+          ],
+          "showOtherItem": true,
+          "colCount": 2
+        }
       ]
     }
   ]

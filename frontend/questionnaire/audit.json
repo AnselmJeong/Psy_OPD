@@ -1,0 +1,287 @@
+{
+    "pages": [
+        {
+            "name": "page1",
+            "title": "AUDIT (알코올 사용 장애 식별 검사)",
+            "description": "다음 질문들은 지난 1년간의 음주에 관한 것입니다. 각 문항을 읽고 해당하는 답을 선택해 주세요.",
+            "elements": [
+                {
+                    "type": "radiogroup",
+                    "name": "audit-01",
+                    "title": "술은 얼마나 자주 마십니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 마시지 않는다"
+                        },
+                        {
+                            "value": 1,
+                            "text": "한 달에 한 번 이하"
+                        },
+                        {
+                            "value": 2,
+                            "text": "한 달에 2-4회"
+                        },
+                        {
+                            "value": 3,
+                            "text": "1주일에 2-3회"
+                        },
+                        {
+                            "value": 4,
+                            "text": "1주일에 4회 이상"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-02",
+                    "title": "평소 술을 마시는 날 몇 잔 정도 마십니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "1-2잔"
+                        },
+                        {
+                            "value": 1,
+                            "text": "3-4잔"
+                        },
+                        {
+                            "value": 2,
+                            "text": "5-6잔"
+                        },
+                        {
+                            "value": 3,
+                            "text": "7-9잔"
+                        },
+                        {
+                            "value": 4,
+                            "text": "10잔 이상"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-03",
+                    "title": "한번 술을 마실때 소주 1병 또는 액주 4병이상 마시는 음주는 얼마나 자주 하십니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 없다"
+                        },
+                        {
+                            "value": 1,
+                            "text": "한 달에 한 번 미만"
+                        },
+                        {
+                            "value": 2,
+                            "text": "한 달에 한번"
+                        },
+                        {
+                            "value": 3,
+                            "text": "일주일에 한번"
+                        },
+                        {
+                            "value": 4,
+                            "text": "매일 같이"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-04",
+                    "title": "지난 1년간, 술을 한 번 마시기 시작하면 멈출 수 없었던 때가 얼마나 자주 있었습니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 없다"
+                        },
+                        {
+                            "value": 1,
+                            "text": "한 달에 한 번 미만"
+                        },
+                        {
+                            "value": 2,
+                            "text": "한 달에 한번"
+                        },
+                        {
+                            "value": 3,
+                            "text": "일주일에 한번"
+                        },
+                        {
+                            "value": 4,
+                            "text": "매일 같이"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-05",
+                    "title": "지난 1년간, 당신은 평소 할 수 있었던 일을 음주 때문에 실패한 적이 얼마나 자주 있었습니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 없다"
+                        },
+                        {
+                            "value": 1,
+                            "text": "한 달에 한 번 미만"
+                        },
+                        {
+                            "value": 2,
+                            "text": "한 달에 한번"
+                        },
+                        {
+                            "value": 3,
+                            "text": "일주일에 한번"
+                        },
+                        {
+                            "value": 4,
+                            "text": "매일 같이"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-06",
+                    "title": "지난 1년간, 술마신 다음날 아침에 다시 해장술이 필요했던 적이 얼마나 자주 있었습니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 없다"
+                        },
+                        {
+                            "value": 1,
+                            "text": "한 달에 한 번 미만"
+                        },
+                        {
+                            "value": 2,
+                            "text": "한 달에 한번"
+                        },
+                        {
+                            "value": 3,
+                            "text": "일주일에 한번"
+                        },
+                        {
+                            "value": 4,
+                            "text": "매일 같이"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-07",
+                    "title": "지난 1년간, 음주 후에 죄책감이 들거나 후회를 한 적이 얼마나 자주 있었습니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 없다"
+                        },
+                        {
+                            "value": 1,
+                            "text": "한 달에 한 번 미만"
+                        },
+                        {
+                            "value": 2,
+                            "text": "한 달에 한번"
+                        },
+                        {
+                            "value": 3,
+                            "text": "일주일에 한번"
+                        },
+                        {
+                            "value": 4,
+                            "text": "매일 같이"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-08",
+                    "title": "지난 1년간, 음주 때문에 전날 밤에 있었던 일이 기억나지 않았던 적이 얼마나 자주 있었습니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 없다"
+                        },
+                        {
+                            "value": 1,
+                            "text": "한 달에 한 번 미만"
+                        },
+                        {
+                            "value": 2,
+                            "text": "한 달에 한번"
+                        },
+                        {
+                            "value": 3,
+                            "text": "일주일에 한번"
+                        },
+                        {
+                            "value": 4,
+                            "text": "매일 같이"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-09",
+                    "title": "음주로 인해 자신이나 다른 사람이 다친 적이 있었습니까?",
+                    "colCount": 2,
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "없었다"
+                        },
+                        {
+                            "value": 2,
+                            "text": "있지만, 지난 1년간에는 없었다"
+                        },
+                        {
+                            "value": 4,
+                            "text": "지난 1년내 있었다"
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "audit-10",
+                    "title": "친척이나 친구 또는 의사가 당신이 술 마시는 것을 걱정하거나 술 끊기를 권유한 적이 있었습니까?",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "없었다"
+                        },
+                        {
+                            "value": 2,
+                            "text": "있지만, 지난 1년간에는 없었다"
+                        },
+                        {
+                            "value": 4,
+                            "text": "지난 1년내 있었다"
+                        }
+                    ],
+                    "isRequired": true
+                }
+            ]
+        }
+    ],
+    "questionErrorLocation": "bottom",
+    "showQuestionNumbers": "off",
+    "showCompletedPage": false
+}

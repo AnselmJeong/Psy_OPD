@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+backend/secret/
+backend/.env
+
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/public/
+
+plan/

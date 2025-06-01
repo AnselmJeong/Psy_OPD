@@ -1,0 +1,515 @@
+{
+    "pages": [
+        {
+            "name": "page1",
+            "title": "베크 우울 척도 (Beck Depression Inventory, BDI)",
+            "description": "지난 일주일 동안의 자신의 상태를 표시해 주세요.",
+            "elements": [
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-01",
+                    "title": "질문 1",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "나는 슬프지 않다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "가끔 슬플 때가 있다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "항상 슬픔에 젖어 헤어나올 수가 없다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "언제나 슬프고 불행해서 견딜 수가 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-02",
+                    "title": "질문 2",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "장래에 대해 특별히 걱정하지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "장래에 대해 가끔 걱정한다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "장래에 대한 기대는 아무것도 없다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "장래에는 절망적이고 나아질 수도 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-03",
+                    "title": "질문 3",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "과거에 대해서도 생각하지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "다른 사람보다 실패를 많이 한 것 같다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "내 인생은 실패의 연속이었다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "나는 완전히 실패한 인간이다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-04",
+                    "title": "질문 4",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "나는 즐거움을 예전처럼 느낀다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "예전처럼 즐거움을 느끼지 못한다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "어떤 일에서도 만족을 느끼지 못한다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "모든 일에 싫증을 느낀다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-05",
+                    "title": "질문 5",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "나는 죄책감을 느끼지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "자주 죄책감을 느낀다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "항상 죄책감을 느낀다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "죄책감 때문에 견딜 수 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-06",
+                    "title": "질문 6",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "나는 벌을 받을 것 같지 않다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "벌을 받을 것 같다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "나는 벌을 받아야 마땅하다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "나는 내 자신을 용서할 수 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-07",
+                    "title": "질문 7",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "나는 내 자신에 대해 실망하지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "내 자신에 대해 실망할 때가 많다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "내 자신이 싫어진다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "나는 내 자신을 증오한다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-08",
+                    "title": "질문 8",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "나는 다른 사람보다 뒤떨어지지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "나의 약점이나 실수는 가끔 내 몫으로 돌린다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "다른 사람보다 뒤떨어지는 것은 거의 내 탓이라고 생각한다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "잘못된 일은 모두 내 탓이다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-09",
+                    "title": "질문 9",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "자살에 대한 생각이 없다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "가끔 죽고 싶은 생각이 들지만 실천할 힘은 못낼 것이다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "기회만 있으면 죽고 싶다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "자살하고 싶은 마음을 참을 수 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-10",
+                    "title": "질문 10",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "평소보다 더 우울한 것은 아니다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "요즘은 예전보다 자주 우울하다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "요즘은 언제나 우울하다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "항상 우울해서 아무것도 할 수 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-11",
+                    "title": "질문 11",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "짜증이 더 잘나지는 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "요즘은 예전보다 더 쉽게 짜증이 난다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "요즘은 항상 짜증이 난다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "요즘은 아무 일에도 짜증이 난다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-12",
+                    "title": "질문 12",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "다른 사람들과의 관계에 변화가 없다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "다른 사람들과 어울리기 싫을 때가 가끔 있다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "거의 대부분 다른 사람들과 어울리지 않는다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "다른 사람들과의 관계에 전혀 흥미가 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-13",
+                    "title": "질문 13",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "결정을 잘 내린다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "결정이 예전보다 어렵다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "아무것도 결정할 수가 없다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "남에게 모든 결정을 맡기고 싶다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-14",
+                    "title": "질문 14",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "내가 내 몸에 해를 끼칠까봐 걱정하지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "내 몸에 해를 끼칠까봐 걱정할 때가 있다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "내 몸에 해를 끼칠까봐 자주 걱정한다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "내 몸에 해를 끼칠까봐 두렵다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-15",
+                    "title": "질문 15",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전과 같이 일을 잘 할 수 있다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "일을 하려면 조금 힘이 든다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "무슨 일이든 하려면 무척 힘이 든다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "전혀 아무 일도 할 수가 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-16",
+                    "title": "질문 16",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "잠자는 데 아무 불편이 없다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "잠이 오는데 때가 가끔 있다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "평소보다 새벽에 일찍 깨 다시 잠들기 어렵다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "병원에 가서 잠에 관한 치료를 받았다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-17",
+                    "title": "질문 17",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "피로를 느끼지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "평소보다 쉽게 피로해진다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "사소한 일에도 피로해진다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "내무관념에서 아무 것도 할 수 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-18",
+                    "title": "질문 18",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "입맛이 줄지 않았다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "음식이 맛없을 때가 나빠졌다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "음식이 맛없다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "전혀 먹고 싶지 않다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-19",
+                    "title": "질문 19",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "체중이 줄지 않았다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "근래 3kg 가량 줄었다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "근래 5kg 가량 줄었다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "근래 7kg 가량 줄었다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-20",
+                    "title": "질문 20",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "신체적 건강에 대한 걱정을 하지 않는다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "신체적 건강에 대한 걱정을 소홀히 한다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "신체적 건강에 대한 걱정 때문에 생각하기가 힘들다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "신체적 건강에 대한 걱정 때문에 아무 것도 할 수 없다."
+                        }
+                    ],
+                    "isRequired": true
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "bdi-21",
+                    "title": "질문 21",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "성적(性的) 흥미에 변화가 없다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "성적(性的) 흥미가 예전보다 약간 떨어졌다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "성적(性的) 흥미가 많이 떨어졌다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "전혀 성적(性的) 흥미가 생기지 않는다."
+                        }
+                    ],
+                    "isRequired": true
+                }
+            ]
+        }
+    ]
+}
