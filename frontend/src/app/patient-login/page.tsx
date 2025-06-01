@@ -104,12 +104,16 @@ export default function PatientLoginPage() {
     }
   };
 
-  // Check if already logged in
-  useEffect(() => {
-    if (mockAuth.isLoggedIn()) {
-      router.push('/rating/demographic');
-    }
-  }, [router]);
+  // 로그아웃 핸들러 추가
+  const handleLogout = () => {
+    mockAuth.logout();
+    setLoggedInPatient(null);
+    setIsModalOpen(true);
+    setCurrentStep('login');
+    setMedicalRecordNumber('');
+    setPassword('');
+    router.push('/patient-login');
+  };
 
   const renderLoginForm = () => (
     <form onSubmit={handleLogin} className="space-y-6">
@@ -250,13 +254,17 @@ export default function PatientLoginPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        title="Mindful Path"
-        size="md"
-      >
+    <div className="relative min-h-screen flex items-center justify-center bg-gray-100">
+      {/* 로그아웃 버튼: 로그인된 상태에서만 우측 상단에 노출 */}
+      {loggedInPatient && (
+        <button
+          onClick={handleLogout}
+          className="absolute top-4 right-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 z-50"
+        >
+          로그아웃
+        </button>
+      )}
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
         {currentStep === 'login' ? renderLoginForm() : renderPasswordChangeForm()}
       </Modal>
     </div>

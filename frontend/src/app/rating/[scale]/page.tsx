@@ -1,7 +1,17 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+
+const RATING_ORDER = [
+  'demographic',
+  'past-history',
+  'audit',
+  'psqi',
+  'bdi',
+  'bai',
+  'k-mdq',
+];
 
 const RatingPage = dynamic(() => import("@/components/Rating"), {
   ssr: false
@@ -52,27 +62,24 @@ const AVAILABLE_SCALES: Record<string, {
 
 export default function ScalePage() {
   const params = useParams();
+  const router = useRouter();
   const scale = params.scale as string;
   const [schema, setSchema] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
     const loadSchema = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Check if scale exists in our available scales
         if (!AVAILABLE_SCALES[scale]) {
           setError(`Rating scale "${scale}" not found. Available scales: ${Object.keys(AVAILABLE_SCALES).join(', ')}`);
           setLoading(false);
           return;
         }
-
         const scaleConfig = AVAILABLE_SCALES[scale];
-        
-        // Dynamic import of the JSON file
         const schemaModule = await import(`../../../../questionnaire/${scaleConfig.filename}`);
         setSchema(schemaModule.default);
       } catch (err) {
@@ -82,11 +89,29 @@ export default function ScalePage() {
         setLoading(false);
       }
     };
-
     if (scale) {
       loadSchema();
     }
   }, [scale]);
+
+  const handleComplete = () => {
+    // localStorage에 완료된 scale 기록
+    if (typeof window !== 'undefined') {
+      const completed = JSON.parse(localStorage.getItem('completedScales') || '[]');
+      if (!completed.includes(scale)) {
+        completed.push(scale);
+        localStorage.setItem('completedScales', JSON.stringify(completed));
+      }
+    }
+    // 현재 scale이 RATING_ORDER에서 몇 번째인지 찾고, 다음 scale로 이동
+    const idx = RATING_ORDER.indexOf(scale);
+    if (idx !== -1 && idx < RATING_ORDER.length - 1) {
+      const nextScale = RATING_ORDER[idx + 1];
+      router.push(`/rating/${nextScale}`);
+    } else {
+      setCompleted(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -128,6 +153,17 @@ export default function ScalePage() {
     return null;
   }
 
+  if (completed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white rounded-lg shadow-md p-12 text-center">
+          <h1 className="text-3xl font-bold mb-4 text-green-700">Thank you for completing all surveys!</h1>
+          <p className="text-lg text-gray-700">Your responses have been recorded. You may now close this window.</p>
+        </div>
+      </div>
+    );
+  }
+
   const scaleConfig = AVAILABLE_SCALES[scale];
 
   return (
@@ -141,9 +177,8 @@ export default function ScalePage() {
             {scaleConfig.description}
           </p>
         </div>
-        
         <div className="bg-white rounded-lg shadow-sm p-8 min-w-[1000px] w-full mx-auto">
-          <RatingPage schema={schema} />
+          <RatingPage schema={schema} onComplete={handleComplete} scale={scale} />
         </div>
       </div>
     </div>

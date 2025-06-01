@@ -1,6 +1,6 @@
 "use client";
 import "survey-core/survey-core.css";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import markdownit from "markdown-it";
 
 
@@ -14,7 +14,7 @@ import { Survey } from "survey-react-ui";
 
 const URL = "http://localhost:3000/api/survey/";
 
-export default function RatingPage({schema}: {schema: object}) {
+export default function RatingPage({schema, onComplete, scale}: {schema: object, onComplete?: (data: any) => void, scale: string}) {
   const survey = new Model(schema);
   survey.applyTheme(LayeredLight);
   // const surveyComplete = useCallback((survey: Model) => {
@@ -41,12 +41,35 @@ export default function RatingPage({schema}: {schema: object}) {
     options.html = str;
   });
 
-  const alertResults = useCallback((survey: Model) => {
-    const results = JSON.stringify(survey.data);
-    alert(results);
-  }, []);
+  const downloadJSON = (data: any, filename: string) => {
+    if (typeof window === "undefined") return; // SSR 방지
+    const jsonStr = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = window.URL.createObjectURL(blob);
 
-  survey.onComplete.add(alertResults);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+
+  useEffect(() => {
+    const handleComplete = (survey: Model) => {
+      const results = survey.data;
+      // 항상 파일 다운로드
+      downloadJSON(results, `user_data_${scale}.json`);
+      if (onComplete) {
+        onComplete(results);
+      }
+    };
+    survey.onComplete.add(handleComplete);
+    return () => {
+      survey.onComplete.remove(handleComplete);
+    };
+  }, [survey, onComplete, scale]);
+
   // survey.onValueChanged.add(saveSurveyResults);
 
   return (

@@ -28,14 +28,14 @@
               "type": "text",
               "name": "personal_psychiatric_diagnosis",
               "title": "만일 '예'라고 대답하셨다면, 병명이나 증상은 무엇이었습니까? (병명 혹은 증상)",
-              "visibleIf": "personal_psychiatric_visit == 'yes'"
+              "visibleIf": "{personal_psychiatric_visit} == 'yes'"
             },
             {
               "type": "radiogroup",
               "name": "personal_psychiatric_medication",
               "title": "약을 처방 받은 적이 있습니까?",
               "description": "약 처방내역이 있다면 처방전이나 약봉토를 준비해 주십시오",
-              "visibleIf": "personal_psychiatric_visit == 'yes'",
+              "visibleIf": "{personal_psychiatric_visit} == 'yes'",
               "choices": [
                 {
                   "value": "yes",
@@ -73,7 +73,7 @@
               "type": "checkbox",
               "name": "family_psychiatric_relation",
               "title": "관계(복수 선택 가능)",
-              "visibleIf": "family_psychiatric_visit == 'yes'",
+              "visibleIf": "{family_psychiatric_visit} == 'yes'",
               "choices": [
                 {
                   "value": "father",
@@ -101,7 +101,7 @@
               "type": "text",
               "name": "family_psychiatric_diagnosis",
               "title": "병명 혹은 증상 (여러 명일 경우 모두 기입)",
-              "visibleIf": "family_psychiatric_visit == 'yes'"
+              "visibleIf": "{family_psychiatric_visit} == 'yes'"
             }
           ]
         },
@@ -129,7 +129,7 @@
               "type": "text",
               "name": "medical_diagnosis_detail",
               "title": "있다면 진단명을 작성해주십시오",
-              "visibleIf": "medical_diagnosis_experience == 'yes'"
+              "visibleIf": "{medical_diagnosis_experience} == 'yes'"
             }
           ]
         }

@@ -1,4 +1,7 @@
+"use client";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // Required assessments that patients should complete
 const REQUIRED_SCALES = {
@@ -50,7 +53,31 @@ const ELECTIVE_SCALES = {
   }
 };
 
+const RATING_ORDER = [
+  'demographic',
+  'past-history',
+  'audit',
+  'psqi',
+  'bdi',
+  'bai',
+  'k-mdq',
+];
+
 export default function RatingIndexPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // localStorage에서 완료된 목록 불러오기
+    const completed = JSON.parse(localStorage.getItem('completedScales') || '[]');
+    // 아직 완료하지 않은 첫 scale 찾기
+    const nextScale = RATING_ORDER.find((scale) => !completed.includes(scale));
+    if (nextScale) {
+      router.push(`/rating/${nextScale}`);
+    }
+    // 모두 완료했다면 아무것도 하지 않음(혹은 Thank you 페이지로 이동 가능)
+  }, [router]);
+
   const renderScaleCard = (key: string, scale: any, isRequired: boolean = false) => (
     <Link 
       key={key}
