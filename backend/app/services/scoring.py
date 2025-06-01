@@ -233,33 +233,69 @@ def _convert_to_numeric(value: Union[str, int, float], max_value: int = 4) -> in
     return max(0, min(numeric_value, max_value))
 
 
-def get_score_interpretation(survey_type: str, score: float) -> str:
+def get_score_interpretation(
+    survey_type: str, score: float, gender: str = None
+) -> Dict[str, str]:
     """
-    Get interpretation/category for a given score
+    Get interpretation/category for a given score using the new interpretation service
+
+    This function now delegates to the more comprehensive interpretation.py service
+    that uses JSON-based criteria.
 
     Args:
         survey_type: Type of survey
         score: Calculated score
+        gender: Gender for assessments that require it (e.g., AUDIT)
 
     Returns:
-        str: Score interpretation
-    """
-    interpretations = {
-        "AUDIT": _interpret_audit_score,
-        "PSQI": _interpret_psqi_score,
-        "BDI": _interpret_bdi_score,
-        "BAI": _interpret_bai_score,
-        "K-MDQ": _interpret_k_mdq_score,
-    }
+        Dict[str, str]: Interpretation result containing category and description
 
-    if survey_type in interpretations:
-        return interpretations[survey_type](score)
-    else:
-        return f"Score: {score}"
+    Deprecated:
+        This function is kept for backward compatibility.
+        Use app.services.interpretation.interpret_rating_scale directly for new code.
+    """
+    from app.services.interpretation import interpret_rating_scale
+
+    try:
+        # Convert survey type to match JSON format
+        survey_type_mapping = {
+            "AUDIT": "AUDIT",
+            "PSQI": "PSQI",  # May need to be added to JSON
+            "BDI": "BDI",
+            "BAI": "BAI",
+            "K-MDQ": "K-MDQ",
+        }
+
+        mapped_survey_type = survey_type_mapping.get(survey_type, survey_type)
+
+        # Call the new interpretation service
+        result = interpret_rating_scale(mapped_survey_type, int(score), gender=gender)
+
+        if "error" in result:
+            # Fallback to simple scoring for unsupported assessments
+            return {
+                "category": "미지원",
+                "description": f"Score: {score} - {result['error']}",
+            }
+
+        return result
+
+    except Exception as e:
+        # Fallback to simple description
+        return {
+            "category": "해석 불가",
+            "description": f"Score: {score} - Error: {str(e)}",
+        }
+
+
+# Legacy interpretation functions (deprecated)
+# These are kept for backward compatibility but should not be used in new code
 
 
 def _interpret_audit_score(score: float) -> str:
-    """Interpret AUDIT score"""
+    """
+    Deprecated: Use app.services.interpretation.interpret_rating_scale instead
+    """
     if score <= 7:
         return f"Low risk (Score: {score})"
     elif score <= 15:
@@ -271,7 +307,9 @@ def _interpret_audit_score(score: float) -> str:
 
 
 def _interpret_psqi_score(score: float) -> str:
-    """Interpret PSQI score"""
+    """
+    Deprecated: Use app.services.interpretation.interpret_rating_scale instead
+    """
     if score <= 5:
         return f"Good sleep quality (Score: {score})"
     else:
@@ -279,7 +317,9 @@ def _interpret_psqi_score(score: float) -> str:
 
 
 def _interpret_bdi_score(score: float) -> str:
-    """Interpret BDI score"""
+    """
+    Deprecated: Use app.services.interpretation.interpret_rating_scale instead
+    """
     if score <= 13:
         return f"Minimal depression (Score: {score})"
     elif score <= 19:
@@ -291,7 +331,9 @@ def _interpret_bdi_score(score: float) -> str:
 
 
 def _interpret_bai_score(score: float) -> str:
-    """Interpret BAI score"""
+    """
+    Deprecated: Use app.services.interpretation.interpret_rating_scale instead
+    """
     if score <= 7:
         return f"Minimal anxiety (Score: {score})"
     elif score <= 15:
@@ -303,7 +345,9 @@ def _interpret_bai_score(score: float) -> str:
 
 
 def _interpret_k_mdq_score(score: float) -> str:
-    """Interpret K-MDQ score"""
+    """
+    Deprecated: Use app.services.interpretation.interpret_rating_scale instead
+    """
     # This is simplified; real K-MDQ interpretation is more complex
     if score >= 10:
         return f"Positive screen for bipolar disorder (Score: {score})"
