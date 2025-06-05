@@ -4,19 +4,9 @@ LLM integration for generating patient summaries
 
 from app.config.settings import settings
 
-from google import genai
-from google.genai import types
-from pydantic import BaseModel, Field
-from typing import Annotated
-
-
-class Report(BaseModel):
-    report: Annotated[str, Field(description="The report content")]
-
-
-class ReportRequest(BaseModel):
-    scale_name: str
-    score_interpretation: dict
+import httpx
+import json
+from typing import Dict, Any
 
 
 def generate_report(rating_result: dict, scale_name: str, score_interpretation: dict):
@@ -31,10 +21,12 @@ def generate_report(rating_result: dict, scale_name: str, score_interpretation: 
         Markdown formatted report
     """
     if not settings.GOOGLE_API_KEY:
+        print("[DEBUG] GOOGLE_API_KEY is not set")
         return generate_fallback_report(scale_name, score_interpretation)
 
-    client = genai.Client(api_key=settings.GOOGLE_API_KEY)
-    model = "gemini-2.5-flash-preview-05-20"
+    # Use REST API directly for more reliable results
+    model = "gemini-2.0-flash"  # Use stable model instead of preview
+    api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
     # Build detailed prompt with all available data
     subscores_text = ""
@@ -59,8 +51,9 @@ def generate_report(rating_result: dict, scale_name: str, score_interpretation: 
     
     ## 해석:
     {score_interpretation.get("interpretation", "N/A")}
+    
     보고서는 일반인이 읽기에 적합한 톤으로 작성하되, 명확하고 이해하기 쉽게 작성해주세요.
-    다음 형식으로 마크다운 보고서를 작성하고, 보고서 부분만 출력해주세요. 다른 부분은 출력하지 마세요:
+    다음 내용과 형식으로 마크다운 보고서를 작성하고, 보고서 부분만 출력해주세요. 다른 부분은 출력하지 마세요:
 
     # {scale_name} 평가 보고서
 
@@ -68,41 +61,63 @@ def generate_report(rating_result: dict, scale_name: str, score_interpretation: 
     - 사용된 평가도구와 목적에 대한 설명
 
     ## 2. 점수 결과
-    - 총점과 구성요소별 점수 (있는 경우)
-    - 점수의 의미와 해석
+    - 총점 및 subscores의 의미와 해석
+    - (원점수는 열거하지 마세요.)
 
     ## 3. 임상적 의미
     - 현재 상태에 대한 전문적 분석
     - 주요 관심 영역 식별
 
-    ## 4. 권장사항
-    - 후속 조치나 치료 방향에 대한 제안
-    - 추가 평가가 필요한 영역
-
-    ## 5. 주의사항
-    - 보고서 해석 시 고려해야 할 사항들
-  
+    권고 사항은 포함하지 마세요.
     """
 
-    try:
-        response = client.models.generate_content(
-            model=model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="text/plain",
-                temperature=0.7,
-                max_output_tokens=2048,
-            ),
-        )
+    # Prepare request payload
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 2048,
+        },
+    }
 
-        return (
-            response.text
-            + "\n\n주의: 이 보고서는 자동 생성된 보고서입니다. 보다 자세한 분석을 위해서는 전문의와 상담하시기 바랍니다."
-        )
+    headers = {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": settings.GOOGLE_API_KEY,
+    }
+
+    try:
+        print(f"[DEBUG] Making request to {api_url}")
+
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(api_url, json=payload, headers=headers)
+
+            print(f"[DEBUG] Response status: {response.status_code}")
+
+            if response.status_code != 200:
+                print(f"[DEBUG] API Error: {response.text}")
+                return generate_fallback_report(scale_name, score_interpretation)
+
+            response_data = response.json()
+            print(f"[DEBUG] Response data keys: {response_data.keys()}")
+
+            if "candidates" in response_data and response_data["candidates"]:
+                candidate = response_data["candidates"][0]
+                if "content" in candidate and "parts" in candidate["content"]:
+                    if candidate["content"]["parts"]:
+                        text_response = candidate["content"]["parts"][0].get("text", "")
+                        print(f"[DEBUG] LLM response length: {len(text_response)}")
+
+                        return (
+                            text_response
+                            + "\n\n주의: 이 보고서는 자동 생성된 보고서입니다. 보다 자세한 분석을 위해서는 전문의와 상담하시기 바랍니다."
+                        )
+
+            print("[DEBUG] No valid content in response")
+            return generate_fallback_report(scale_name, score_interpretation)
 
     except Exception as e:
         # LLM 호출 실패 시 기본 보고서 반환
-        print(f"LLM 호출 실패: {e}")
+        print(f"[DEBUG] LLM 호출 실패: {e}")
         return generate_fallback_report(scale_name, score_interpretation)
 
 

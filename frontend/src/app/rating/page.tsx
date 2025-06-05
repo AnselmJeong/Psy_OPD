@@ -1,7 +1,8 @@
-"use client";
+"use client"; 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { getCompletedSurveys } from "@/lib/firebase";
 
 // Required assessments that patients should complete
 const REQUIRED_SCALES = {
@@ -72,19 +73,69 @@ const RATING_ORDER = [
   'k-mdq',
 ];
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 export default function RatingIndexPage() {
   const router = useRouter();
   const [completedScales, setCompletedScales] = useState<string[]>([]);
   const [nextScale, setNextScale] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch completed surveys directly from Firebase
+  const fetchCompletedScales = async () => {
+    try {
+      setLoading(true);
+      const patientData = JSON.parse(localStorage.getItem('loggedInPatient') || '{}');
+      const patientId = patientData.medicalRecordNumber;
+      
+      if (!patientId) {
+        console.log("No patient logged in, using localStorage fallback");
+        // Fallback to localStorage if no patient logged in
+        const completed = JSON.parse(localStorage.getItem('completedScales') || '[]');
+        setCompletedScales(completed);
+        const next = RATING_ORDER.find((scale) => !completed.includes(scale));
+        setNextScale(next || null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch completed surveys directly from Firebase
+        const completedFromFirebase = await getCompletedSurveys(patientId);
+        
+        console.log('Fetched from Firebase:', completedFromFirebase);
+        setCompletedScales(completedFromFirebase);
+        
+        // Update localStorage for consistency
+        localStorage.setItem('completedScales', JSON.stringify(completedFromFirebase));
+        
+        // Find next scale to complete
+        const next = RATING_ORDER.find((scale) => !completedFromFirebase.includes(scale));
+        setNextScale(next || null);
+        
+      } catch (firebaseError) {
+        console.error('Failed to fetch from Firebase, using localStorage fallback:', firebaseError);
+        // Fallback to localStorage if Firebase fails
+        const completed = JSON.parse(localStorage.getItem('completedScales') || '[]');
+        setCompletedScales(completed);
+        const next = RATING_ORDER.find((scale) => !completed.includes(scale));
+        setNextScale(next || null);
+      }
+    } catch (error) {
+      console.error('Error in fetchCompletedScales:', error);
+      // Final fallback to localStorage
+      const completed = JSON.parse(localStorage.getItem('completedScales') || '[]');
+      setCompletedScales(completed);
+      const next = RATING_ORDER.find((scale) => !completed.includes(scale));
+      setNextScale(next || null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    // localStorage에서 완료된 목록 불러오기
-    const completed = JSON.parse(localStorage.getItem('completedScales') || '[]');
-    setCompletedScales(completed);
-    // 아직 완료하지 않은 첫 scale 찾기
-    const next = RATING_ORDER.find((scale) => !completed.includes(scale));
-    setNextScale(next || null);
+    fetchCompletedScales();
   }, []);
 
   const handleStartNext = () => {

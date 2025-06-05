@@ -2,7 +2,7 @@
 Survey models for request/response validation
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
@@ -13,32 +13,38 @@ class SurveySubmitRequest(BaseModel):
     patient_id: str  # Medical record number
     survey_type: str  # e.g., "AUDIT", "PSQI", "BDI"
     responses: Dict[str, Any]  # Survey.js response JSON
+    timestamp: str
     token: str  # Patient's auth token
 
 
 class SurveySubmitResponse(BaseModel):
     """Survey submission response model"""
 
+    message: Optional[str] = None
     survey_id: str  # Unique ID for the survey submission
-    score: float  # Calculated score
-    summary: str  # LLM-generated summary
+    score: Optional[float] = None  # Allow None value for score
+    interpretation: Optional[str] = None
+    summary: Optional[str] = None
 
 
 class SurveyResult(BaseModel):
     """Individual survey result model"""
 
     survey_id: str
+    patient_id: str
     survey_type: str
-    submission_date: str  # ISO 8601 format
-    score: float
-    summary: str
     responses: Dict[str, Any]
+    timestamp: str
+    score: Optional[float] = None
+    interpretation: Optional[str] = None
+    summary: Optional[str] = None
+    subscores: Optional[Dict[str, Any]] = None
 
 
 class SurveyResultList(BaseModel):
     """List of survey results"""
 
-    results: List[SurveyResult]
+    surveys: List[SurveyResult]
 
 
 class SurveyMetadata(BaseModel):
@@ -47,6 +53,7 @@ class SurveyMetadata(BaseModel):
     survey_type: str
     title: str
     description: str
+    version: str = "1.0"
 
 
 class SurveyMetadataList(BaseModel):
@@ -83,3 +90,7 @@ class TrendData(BaseModel):
     patient_id: str
     survey_type: str
     trend_data: List[TrendDataPoint]
+
+
+class Config:
+    from_attributes = True

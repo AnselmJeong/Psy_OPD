@@ -6,6 +6,7 @@ import os
 import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+import uuid
 
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
@@ -20,10 +21,12 @@ def initialize_firebase():
         # Check if Firebase is already initialized
         firebase_admin.get_app()
     except ValueError:
-        # Initialize Firebase
+        # Initialize Firebase with proper path
         cred_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            settings.FIREBASE_CREDENTIALS_PATH,
+            os.path.dirname(
+                os.path.dirname(os.path.dirname(__file__))
+            ),  # Go to backend/
+            settings.FIREBASE_CREDENTIALS_PATH,  # secret/psy-opd.json
         )
 
         if not os.path.exists(cred_path):
@@ -33,19 +36,48 @@ def initialize_firebase():
 
         cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
+        print(f"Firebase initialized with credentials from {cred_path}")
+
+
+# Define required survey types (front-end required scales)
+REQUIRED_SURVEY_TYPES = {
+    "demographic",
+    "past_history",
+    "demographic",  # ensure both naming conventions
+    "past-history",
+    "audit",
+    "psqi",
+    "bdi",
+    "bai",
+    "k-mdq",
+    # Also include backend mapped names in upper-case for safety
+    "DEMOGRAPHIC",
+    "PAST_HISTORY",
+    "AUDIT",
+    "PSQI",
+    "BDI",
+    "BAI",
+    "K-MDQ",
+}
 
 
 class FirebaseService:
     """Firebase service for authentication and database operations"""
 
     def __init__(self):
-        # Initialize Firebase first
+        # Initialize Firebase
         initialize_firebase()
         self.db = firestore.client()
+        print("Using real Firestore client")
 
     # Authentication methods
     async def verify_token(self, token: str) -> Dict[str, Any]:
         """Verify Firebase ID token and return user data"""
+        # For development, allow mock tokens
+        if token.startswith("mock_token_"):
+            user_id = token.replace("mock_token_", "")
+            return {"uid": user_id, "user_type": "patient"}
+
         try:
             decoded_token = auth.verify_id_token(token)
             return decoded_token
@@ -131,11 +163,31 @@ class FirebaseService:
 
     # Survey methods
     async def save_survey_result(self, survey_data: Dict[str, Any]) -> str:
-        """Save survey result to Firestore"""
+        """Save survey result to Firestore following the structure:
+        surveys/{patient_id}/{required|elective}/{auto_doc_id}
+        """
         try:
+            # Determine category (required vs elective)
+            survey_type_raw = survey_data.get("survey_type", "")
+            survey_type_key = str(survey_type_raw).lower()
+            category = (
+                "required"
+                if survey_type_key in [t.lower() for t in REQUIRED_SURVEY_TYPES]
+                else "elective"
+            )
+
+            # Add timestamp
             survey_data["submission_date"] = firestore.SERVER_TIMESTAMP
-            doc_ref = self.db.collection("surveys").document()
+
+            patient_id = survey_data["patient_id"]
+            # Build hierarchical path
+            collection_ref = (
+                self.db.collection("surveys").document(patient_id).collection(category)
+            )
+
+            doc_ref = collection_ref.document()  # Auto-generated ID
             doc_ref.set(survey_data)
+            print(f"Survey saved: surveys/{patient_id}/{category}/{doc_ref.id}")
             return doc_ref.id
         except Exception as e:
             raise HTTPException(
@@ -148,33 +200,41 @@ class FirebaseService:
         survey_type: Optional[str] = None,
         date_filter: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Get surveys for a specific patient"""
+        """Get surveys for a specific patient from both required and elective subcollections"""
         try:
-            query = self.db.collection("surveys").where("patient_id", "==", patient_id)
+            categories = ["required", "elective"]
+            all_results: List[Dict[str, Any]] = []
 
-            if survey_type:
-                query = query.where("survey_type", "==", survey_type)
+            for category in categories:
+                col_ref = (
+                    self.db.collection("surveys")
+                    .document(patient_id)
+                    .collection(category)
+                )
 
-            # Add date filtering if needed
-            if date_filter:
-                # Convert date_filter to datetime for comparison
-                # Implementation depends on date format
-                pass
+                query = col_ref
+                if survey_type:
+                    query = query.where("survey_type", "==", survey_type)
 
-            docs = query.order_by(
-                "submission_date", direction=firestore.Query.DESCENDING
-            ).stream()
+                docs = query.stream()
+                for doc in docs:
+                    data = doc.to_dict()
+                    data["survey_id"] = doc.id
+                    data["category"] = category
+                    # Convert timestamp to ISO string for consistency
+                    if "submission_date" in data:
+                        if hasattr(data["submission_date"], "isoformat"):
+                            data["submission_date"] = data[
+                                "submission_date"
+                            ].isoformat()
+                        else:
+                            data["submission_date"] = str(data["submission_date"])
+                    all_results.append(data)
 
-            results = []
-            for doc in docs:
-                data = doc.to_dict()
-                data["survey_id"] = doc.id
-                # Convert timestamp to ISO string
-                if "submission_date" in data:
-                    data["submission_date"] = data["submission_date"].isoformat()
-                results.append(data)
+            # Sort by submission_date descending
+            all_results.sort(key=lambda x: x.get("submission_date", ""), reverse=True)
 
-            return results
+            return all_results
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Failed to get patient surveys: {str(e)}"
@@ -183,28 +243,35 @@ class FirebaseService:
     async def get_all_patients_surveys(self) -> List[Dict[str, Any]]:
         """Get survey metadata for all patients (for dashboard)"""
         try:
-            docs = self.db.collection("surveys").stream()
+            categories = ["required", "elective"]
+            patients_data: Dict[str, Any] = {}
 
-            # Group by patient
-            patients_data = {}
-            for doc in docs:
-                data = doc.to_dict()
-                patient_id = data["patient_id"]
+            for category in categories:
+                docs = self.db.collection_group(category).stream()
 
-                if patient_id not in patients_data:
-                    patients_data[patient_id] = {
-                        "patient_id": patient_id,
-                        "surveys": [],
+                for doc in docs:
+                    data = doc.to_dict()
+                    # Get patient_id from document path or data
+                    patient_id = (
+                        data.get("patient_id") or doc.reference.parent.parent.id
+                    )
+                    if not patient_id:
+                        continue
+
+                    if patient_id not in patients_data:
+                        patients_data[patient_id] = {
+                            "patient_id": patient_id,
+                            "surveys": [],
+                        }
+
+                    survey_info = {
+                        "survey_type": data.get("survey_type"),
+                        "submission_date": data.get("submission_date").isoformat()
+                        if hasattr(data.get("submission_date"), "isoformat")
+                        else str(data.get("submission_date")),
+                        "survey_id": doc.id,
                     }
-
-                survey_info = {
-                    "survey_type": data["survey_type"],
-                    "submission_date": data["submission_date"].isoformat()
-                    if "submission_date" in data
-                    else None,
-                    "survey_id": doc.id,
-                }
-                patients_data[patient_id]["surveys"].append(survey_info)
+                    patients_data[patient_id]["surveys"].append(survey_info)
 
             return list(patients_data.values())
         except Exception as e:
@@ -217,30 +284,74 @@ class FirebaseService:
     ) -> List[Dict[str, Any]]:
         """Get survey trend data for visualization"""
         try:
-            docs = (
-                self.db.collection("surveys")
-                .where("patient_id", "==", patient_id)
-                .where("survey_type", "==", survey_type)
-                .order_by("submission_date")
-                .stream()
-            )
+            categories = ["required", "elective"]
+            trend_data: List[Dict[str, Any]] = []
 
-            trend_data = []
-            for doc in docs:
-                data = doc.to_dict()
-                trend_point = {
-                    "submission_date": data["submission_date"].isoformat()
-                    if "submission_date" in data
-                    else None,
-                    "score": data.get("score", 0),
-                }
-                trend_data.append(trend_point)
+            for category in categories:
+                col_ref = (
+                    self.db.collection("surveys")
+                    .document(patient_id)
+                    .collection(category)
+                ).where("survey_type", "==", survey_type)
 
+                docs = col_ref.order_by("submission_date").stream()
+                for doc in docs:
+                    data = doc.to_dict()
+                    trend_point = {
+                        "submission_date": data.get("submission_date").isoformat()
+                        if hasattr(data.get("submission_date"), "isoformat")
+                        else str(data.get("submission_date")),
+                        "score": data.get("score", 0),
+                    }
+                    trend_data.append(trend_point)
+
+            # Ensure results sorted by date
+            trend_data.sort(key=lambda x: x.get("submission_date", ""))
             return trend_data
         except Exception as e:
             raise HTTPException(
                 status_code=400, detail=f"Failed to get survey trends: {str(e)}"
             )
+
+    async def get_patient_demographic_info(
+        self, patient_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """Get patient demographic information from surveys collection"""
+        try:
+            # Look for DEMOGRAPHIC survey in required collection
+            col_ref = (
+                self.db.collection("surveys")
+                .document(patient_id)
+                .collection("required")
+            )
+
+            # Query for DEMOGRAPHIC survey type
+            query = col_ref.where("survey_type", "==", "DEMOGRAPHIC")
+            docs = list(query.stream())
+
+            if docs:
+                # Get the most recent demographic survey
+                demographic_doc = max(
+                    docs, key=lambda doc: doc.to_dict().get("submission_date", "")
+                )
+                demographic_data = demographic_doc.to_dict()
+
+                print(
+                    f"[DEBUG] Found demographic survey with keys: {list(demographic_data.keys())}"
+                )
+
+                # Extract responses which contain the actual demographic info
+                responses = demographic_data.get("responses", {})
+                print(f"[DEBUG] Demographic responses keys: {list(responses.keys())}")
+
+                return responses
+
+            print(f"[DEBUG] No DEMOGRAPHIC survey found for patient {patient_id}")
+            return None
+
+        except Exception as e:
+            print(f"[DEBUG] Error fetching demographic info: {e}")
+            return None
 
 
 # Global instance

@@ -2,7 +2,7 @@
 Authentication endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from app.models.auth import (
     LoginRequest,
     LoginResponse,
@@ -10,11 +10,26 @@ from app.models.auth import (
     UpdatePasswordResponse,
     RegisterClinicianRequest,
     RegisterClinicianResponse,
+    TokenData,
+    # RegisterRequest,  # Commented out due to ImportError
+    # RegisterResponse,  # Commented out due to ImportError
+    # RefreshTokenRequest,  # Commented out due to ImportError
+    # RefreshTokenResponse,  # Commented out due to ImportError
 )
 from app.services.firebase import firebase_service
+
+# from app.services.auth import auth_service  # Commented out due to ImportError
 from app.dependencies.auth import verify_admin_token
+from pydantic import BaseModel
+from google.cloud import firestore
 
 router = APIRouter()
+
+
+# Patient Login Model
+class PatientLoginRequest(BaseModel):
+    medicalRecordNumber: str
+    password: str
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -181,3 +196,39 @@ async def register_patient(user_id: str, password: str, admin_token: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+
+
+@router.post("/patient/login")
+async def patient_login(request: PatientLoginRequest):
+    """
+    Handle patient login by validating and storing credentials in Firebase Firestore.
+    For initial login, password is the date of birth.
+    """
+    from app.services.firebase import firebase_service
+
+    try:
+        # Check if patient exists in Firestore
+        db = firebase_service.db
+        patient_ref = db.collection("patients").document(request.medicalRecordNumber)
+        patient_doc = patient_ref.get()
+        if patient_doc.exists:
+            stored_data = patient_doc.to_dict()
+            if stored_data.get("password") == request.password:
+                return {"success": True, "message": "Login successful"}
+            else:
+                return {"success": False, "message": "Invalid password"}
+        else:
+            # New patient, store credentials
+            patient_ref.set(
+                {
+                    "medicalRecordNumber": request.medicalRecordNumber,
+                    "password": request.password,
+                    "createdAt": firestore.SERVER_TIMESTAMP,
+                }
+            )
+            return {"success": True, "message": "New patient registered and logged in"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error during patient login: {str(e)}",
+        )

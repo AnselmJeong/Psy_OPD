@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/Modal';
-import { mockAuth, Patient } from '@/lib/mockAuth';
+// import { mockAuth, Patient } from '@/lib/mockAuth';
+import { signIn } from '@/lib/firebase';
 
 export default function PatientLoginPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function PatientLoginPage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loggedInPatient, setLoggedInPatient] = useState<Patient | null>(null);
+  const [loggedInPatient, setLoggedInPatient] = useState<{ medicalRecordNumber: string } | null>(null);
 
   // Close modal and go back to home
   const handleCloseModal = () => {
@@ -30,30 +31,35 @@ export default function PatientLoginPage() {
   // Handle login form submission
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
     try {
-      const result = await mockAuth.login(medicalRecordNumber, password);
-      
-      if (result.success && result.patient) {
-        setLoggedInPatient(result.patient);
-        
-        if (result.requiresPasswordChange) {
-          // Show password change form
-          setCurrentPassword(password);
-          setCurrentStep('changePassword');
-        } else {
-          // Login successful, set session and redirect
-          mockAuth.setCurrentPatient(result.patient);
-          setIsModalOpen(false);
-          router.push('/rating/demographic');
-        }
-      } else {
-        setError(result.message || '로그인에 실패했습니다.');
+      setIsLoading(true);
+      setError('');
+      // Send credentials to backend for validation and storage
+      const response = await fetch('http://localhost:8000/api/v1/auth/patient/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ medicalRecordNumber, password }),
+      });
+      console.log('Login response status:', response.status);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Login failed with status:', response.status, 'and message:', errorText);
+        throw new Error(`Login failed: ${response.status} - ${errorText}`);
       }
-    } catch (error) {
-      setError('로그인 중 오류가 발생했습니다.');
+      const data = await response.json();
+      if (data.success) {
+        // Store logged in patient information in localStorage
+        localStorage.setItem('loggedInPatient', JSON.stringify({ medicalRecordNumber }));
+        setLoggedInPatient({ medicalRecordNumber });
+        router.push('/rating/demographic');
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('로그인에 실패했습니다. 병록번호와 비밀번호를 확인해주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -74,19 +80,31 @@ export default function PatientLoginPage() {
     setError('');
 
     try {
-      const result = await mockAuth.changePassword(
-        loggedInPatient.medicalRecordNumber,
-        currentPassword,
-        newPassword
-      );
+      // Send password change request to backend
+      const response = await fetch('http://localhost:8000/api/v1/patient/update-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: loggedInPatient.medicalRecordNumber,
+          current_password: currentPassword,
+          new_password: newPassword
+        }),
+      });
 
-      if (result.success) {
-        // Password changed successfully, set session and redirect
-        mockAuth.setCurrentPatient(loggedInPatient);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Password change failed with status:', response.status, 'and message:', errorText);
+        throw new Error(`Password change failed: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      if (result.message === 'Password updated successfully') {
         setIsModalOpen(false);
         router.push('/rating/demographic');
       } else {
-        setError(result.message);
+        setError(result.message || '비밀번호 변경에 실패했습니다.');
       }
     } catch (error) {
       setError('비밀번호 변경 중 오류가 발생했습니다.');
@@ -98,7 +116,6 @@ export default function PatientLoginPage() {
   // Skip password change and continue with default password
   const handleSkipPasswordChange = () => {
     if (loggedInPatient) {
-      mockAuth.setCurrentPatient(loggedInPatient);
       setIsModalOpen(false);
       router.push('/rating/demographic');
     }
@@ -106,7 +123,8 @@ export default function PatientLoginPage() {
 
   // 로그아웃 핸들러 추가
   const handleLogout = () => {
-    mockAuth.logout();
+    // Remove patient information from localStorage on logout
+    localStorage.removeItem('loggedInPatient');
     setLoggedInPatient(null);
     setIsModalOpen(true);
     setCurrentStep('login');
@@ -264,7 +282,11 @@ export default function PatientLoginPage() {
           로그아웃
         </button>
       )}
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={currentStep === 'login' ? '환자 로그인' : '비밀번호 변경'}
+      >
         {currentStep === 'login' ? renderLoginForm() : renderPasswordChangeForm()}
       </Modal>
     </div>

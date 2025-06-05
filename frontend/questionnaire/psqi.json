@@ -8,11 +8,11 @@
         {
           "type": "text",
           "name": "hour_to_goto_sleep",
-          "title": "지난 한달 동안 보통 밤 몇 시에 취침하셨습니까",
+          "title": "지난 한달 동안 보통 언제 잠자리에 드셨습니까",
           "description": "24시간 단위로 기록하세요 (밤 10시는 22시, 오전 1시는 01시)",
-          "inputType": "number",
-          "min": 0,
-          "max": 24
+          "inputType": "time",
+          "min": "18:00",
+          "max": "06:00"
         },
         {
           "type": "radiogroup",
@@ -41,11 +41,11 @@
         {
           "type": "text",
           "name": "wakeup_time",
-          "title": "지난 한달 동안 보통 아침 몇 시에 일어났습니까",
+          "title": "지난 한달 동안 보통 언제 일어났습니까",
           "description": "평소 기상 시간",
-          "inputType": "number",
-          "min": 0,
-          "max": 24
+          "inputType": "time",
+          "min": "00:00",
+          "max": "12:00"
         },
         {
           "type": "text",

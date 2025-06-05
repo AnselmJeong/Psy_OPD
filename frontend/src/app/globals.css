@@ -109,3 +109,44 @@ a:focus-visible {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+
+.sd-table__cell:not(.sd-table__cell--empty):not(.sd-table__cell--actions):not(.sd-table__cell--row-text):not(:empty) {
+  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+}
+
+.sd-table__cell--header:not(.sd-table__cell--empty) {
+  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+}
+
+.sd-matrixdropdown .sd-table__cell--header.sd-table__cell--empty {
+  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+}
+
+.sd-matrixdropdown .sd-table__cell--header:not(.sd-table__cell--empty) {
+  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+}
+.sd-matrixdropdown .sd-table__cell--header:not(.sd-table__cell--empty).sd-table__cell--dropdown, .sd-matrixdropdown .sd-table__cell--header:not(.sd-table__cell--empty).sd-table__cell--rating {
+  min-width: calc(20 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+}
+.sd-matrixdropdown .sd-table__cell--header:not(.sd-table__cell--empty).sd-table__cell--boolean {
+  min-width: calc(15 * (var(--sjs-base-unit, var(--base-unit, 8px))));
+}
+
+/* row-text.sd-table__cell-- {
+  font-weight: var(--sjs-font-questiontitle-weight, 600);
+  color: var(--sjs-font-questiontitle-color, var(--sjs-general-forecolor, var(--foreground, #161616)));
+  text-align: start;
+  min-width: calc(12 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+  max-width: calc(15 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+  padding: calc(1.5 * (var(--sjs-base-unit, var(--base-unit, 8px)))) var(--sjs-base-unit, var(--base-unit, 8px));
+} */
+
+.sd-table__cell--row-text {
+  min-width: calc(40 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+  /* max-width: calc(15 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important; */
+}
+
+.sv-string-viewer {
+  white-space: pre-line;
+}

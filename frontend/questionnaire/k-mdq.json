@@ -78,7 +78,7 @@
                     "isRequired": true
                 },
                 {
-                    "name": "simultaniety",
+                    "name": "simultaneity",
                     "title": "증상의 동시 발현",
                     "description": "만약 위의 질문 중에서 두 개 이상 '예'라고 답했다면, 그중 몇 가지는 같은 시기에 벌어진 것입니까?",
                     "type": "boolean",
