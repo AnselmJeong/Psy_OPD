@@ -5,6 +5,7 @@ Application settings and configuration
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
 
 
 class Settings(BaseSettings):
@@ -18,13 +19,10 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Healthcare Survey Backend"
 
     # Firebase Configuration
-    FIREBASE_CREDENTIALS_PATH: str = (
-        "secret/psy-opd-firebase-adminsdk-fbsvc-d8e30124f5.json"
-    )
+    FIREBASE_CREDENTIALS_PATH: str = "secret/psy-opd-firebase-adminsdk-fbsvc-d8e30124f5.json"
 
     # LLM Configuration
-    LLM_API_KEY: Optional[str] = None
-    LLM_API_BASE_URL: str = "https://api.openai.com/v1"
+    GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY")
 
     # Admin Configuration
     ADMIN_SECRET_KEY: Optional[str] = None
@@ -38,6 +36,8 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
 
+
+load_dotenv()
 
 # Create settings instance
 settings = Settings()
