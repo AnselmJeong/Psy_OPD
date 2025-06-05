@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Secret
+.env
+
 backend/secret/
 backend/.env
 
