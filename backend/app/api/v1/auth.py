@@ -22,6 +22,8 @@ from app.services.firebase import firebase_service
 from app.dependencies.auth import verify_admin_token
 from pydantic import BaseModel
 from google.cloud import firestore
+import requests
+from app.config.settings import settings
 
 router = APIRouter()
 
@@ -38,52 +40,23 @@ async def login(request: LoginRequest):
     Authenticate a user (patient or clinician) and return a session token
     """
     try:
-        # Verify credentials
-        is_valid = await firebase_service.verify_password(
-            request.user_id, request.password
-        )
-
-        if not is_valid:
+        # Use Firebase Auth REST API for email/password verification
+        FIREBASE_API_KEY = settings.FIREBASE_API_KEY  # Add this to your settings
+        url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_API_KEY}"
+        payload = {
+            "email": request.user_id,
+            "password": request.password,
+            "returnSecureToken": True,
+        }
+        resp = requests.post(url, json=payload)
+        if resp.status_code != 200:
             raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        # Get user profile to verify user type
-        user_profile = await firebase_service.get_user_profile(request.user_id)
-
-        if not user_profile:
-            raise HTTPException(status_code=401, detail="User profile not found")
-
-        # Verify user type matches
-        if user_profile.get("user_type") != request.user_type:
-            raise HTTPException(status_code=401, detail="Invalid user type")
-
-        # For simplicity, we'll create a custom token
-        # In a real implementation, use Firebase Auth custom tokens
-        try:
-            # Create Firebase custom token
-            from firebase_admin import auth
-
-            custom_token = auth.create_custom_token(
-                request.user_id, {"user_type": request.user_type}
-            )
-            token = custom_token.decode("utf-8")
-        except Exception:
-            # Fallback to simple token for development
-            import jwt
-            from app.config.settings import settings
-
-            payload = {"uid": request.user_id, "user_type": request.user_type}
-            token = jwt.encode(
-                payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM
-            )
-
+        id_token = resp.json()["idToken"]
         return LoginResponse(
-            token=token, user_id=request.user_id, user_type=request.user_type
+            token=id_token, user_id=request.user_id, user_type=request.user_type
         )
-
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
+        raise HTTPException(status_code=401, detail=f"Login failed: {str(e)}")
 
 
 @router.post("/patient/update-password", response_model=UpdatePasswordResponse)

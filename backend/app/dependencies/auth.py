@@ -5,7 +5,7 @@ Authentication dependencies for token validation and role-based access
 from typing import Optional
 from fastapi import Depends, HTTPException, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import jwt
+from firebase_admin import auth as firebase_auth
 from app.config.settings import settings
 
 from app.services.firebase import firebase_service
@@ -31,30 +31,17 @@ async def get_current_user(
         HTTPException: If token is invalid
     """
     token = credentials.credentials
-
     try:
-        # Decode JWT token
-        decoded_token = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-
-        # Extract user data
-        user_id = decoded_token.get("uid")
-        user_type = decoded_token.get("user_type", "patient")  # Default to patient
-
-        if not user_id:
-            raise HTTPException(
-                status_code=401, detail="Invalid token: missing user ID"
-            )
-
+        # Firebase Admin SDK로 토큰 검증
+        decoded_token = firebase_auth.verify_id_token(token)
+        user_id = decoded_token.get("email") or decoded_token.get("uid")
+        # user_type은 custom claim이 없으면 별도 로직 필요 (여기선 clinician만 로그인하니 clinician으로 고정)
+        user_type = "clinician" if user_id and not user_id.isdigit() else "patient"
+        print(f"[DEBUG] Token verified: user_id={user_id}, user_type={user_type}")
         return TokenData(user_id=user_id, user_type=user_type)
-
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
     except Exception as e:
-        raise HTTPException(
-            status_code=401, detail=f"Token validation failed: {str(e)}"
-        )
+        print(f"[DEBUG] Token verification failed: {e}")
+        raise HTTPException(status_code=401, detail=f"Invalid Firebase token: {str(e)}")
 
 
 async def get_current_patient(

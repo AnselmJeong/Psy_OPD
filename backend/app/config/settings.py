@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     # Firebase Configuration
     FIREBASE_CREDENTIALS_PATH: str = "secret/psy-opd.json"
+    FIREBASE_API_KEY: Optional[str] = None
 
     # LLM Configuration - use default value if not found
     GOOGLE_API_KEY: Optional[str] = None
@@ -46,6 +47,21 @@ settings = Settings()
 
 # Debug print to check if API key is loaded
 if settings.DEBUG:
+    # Firebase API Key debug
+    if settings.FIREBASE_API_KEY:
+        print(f"FIREBASE_API_KEY loaded: length {len(settings.FIREBASE_API_KEY)}")
+        print(f"FIREBASE_API_KEY prefix: {settings.FIREBASE_API_KEY[:10]}...")
+    else:
+        print("FIREBASE_API_KEY not loaded from environment")
+        print(
+            f"  os.environ.get('FIREBASE_API_KEY'): {bool(os.environ.get('FIREBASE_API_KEY'))}"
+        )
+        if os.environ.get("FIREBASE_API_KEY"):
+            print(
+                f"  Found in os.environ with length: {len(os.environ.get('FIREBASE_API_KEY'))}"
+            )
+
+    # Google API Key debug
     # print(f"GOOGLE_API_KEY loaded: {'Yes' if settings.GOOGLE_API_KEY else 'No'}")
     if settings.GOOGLE_API_KEY:
         print(f"GOOGLE_API_KEY length: {len(settings.GOOGLE_API_KEY)}")

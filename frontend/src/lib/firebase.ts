@@ -2,15 +2,22 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, getDocs, doc } from 'firebase/firestore';
 
-// Firebase configuration
+// Firebase configuration - 하드코딩으로 강제 설정
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  apiKey: "AIzaSyAzFcoXyheI1h_X0WyO14G9s90PKnZ8wyg",
+  authDomain: "psy-opd.firebaseapp.com",
+  projectId: "psy-opd",
+  storageBucket: "psy-opd.firebasestorage.app",
+  messagingSenderId: "976520764826",
+  appId: "1:976520764826:web:800d717126884f90b8ae23"
 };
+
+// Debug logging
+console.log('Firebase Config Debug (Hardcoded):', {
+  projectId: firebaseConfig.projectId,
+  apiKeyPrefix: firebaseConfig.apiKey?.substring(0, 10) + '...',
+  authDomain: firebaseConfig.authDomain
+});
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
