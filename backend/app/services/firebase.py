@@ -365,7 +365,7 @@ class FirebaseService:
             {
                 "summary": total_summary,
                 "survey_type": "TOTAL_SUMMARY",
-                "updated_at": datetime.utcnow(),
+                "submission_date": firestore.SERVER_TIMESTAMP,
             }
         )
 
