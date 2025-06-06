@@ -5,6 +5,8 @@ Authentication dependencies for token validation and role-based access
 from typing import Optional
 from fastapi import Depends, HTTPException, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import jwt
+from app.config.settings import settings
 
 from app.services.firebase import firebase_service
 from app.models.auth import TokenData
@@ -31,8 +33,10 @@ async def get_current_user(
     token = credentials.credentials
 
     try:
-        # Verify token with Firebase
-        decoded_token = await firebase_service.verify_token(token)
+        # Decode JWT token
+        decoded_token = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
 
         # Extract user data
         user_id = decoded_token.get("uid")
@@ -45,8 +49,12 @@ async def get_current_user(
 
         return TokenData(user_id=user_id, user_type=user_type)
 
-    except Exception as e:
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception as e:
+        raise HTTPException(
+            status_code=401, detail=f"Token validation failed: {str(e)}"
+        )
 
 
 async def get_current_patient(
@@ -146,8 +154,6 @@ async def verify_admin_token(admin_token: str) -> bool:
     Raises:
         HTTPException: If token is invalid
     """
-    from app.config.settings import settings
-
     if not settings.ADMIN_SECRET_KEY:
         raise HTTPException(
             status_code=500, detail="Admin functionality not configured"

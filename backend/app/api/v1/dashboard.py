@@ -4,11 +4,13 @@ Dashboard endpoints (Clinician-only)
 
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Query
+from datetime import datetime
 
 from app.models.survey import PatientSurveyList, TrendData
 from app.models.auth import TokenData
 from app.services.firebase import firebase_service
 from app.dependencies.auth import get_current_clinician
+from app.services.llm import generate_total_summary
 
 router = APIRouter()
 
@@ -311,4 +313,74 @@ async def get_patient_profile(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to get patient profile: {str(e)}"
+        )
+
+
+@router.get("/patient/{patient_id}/report")
+async def get_patient_report(
+    patient_id: str,
+    current_user: TokenData = Depends(get_current_clinician),
+):
+    """
+    Generate a comprehensive report for a patient based on their latest survey results
+    Clinician-only endpoint
+    """
+    try:
+        # Get all surveys for the patient
+        all_surveys = await firebase_service.get_patient_surveys(patient_id)
+
+        if not all_surveys:
+            raise HTTPException(
+                status_code=404, detail=f"No survey data found for patient {patient_id}"
+            )
+
+        # Filter out DEMOGRAPHIC and PAST_HISTORY surveys
+        filtered_surveys = [
+            survey
+            for survey in all_surveys
+            if survey["survey_type"].upper() not in ["DEMOGRAPHIC", "PAST_HISTORY"]
+        ]
+
+        # Group surveys by type and get the latest one for each type
+        latest_surveys = {}
+        for survey in filtered_surveys:
+            survey_type = survey["survey_type"]
+            if survey_type not in latest_surveys:
+                latest_surveys[survey_type] = survey
+            else:
+                # Compare submission dates and keep the latest
+                current_date = survey.get("submission_date", "")
+                existing_date = latest_surveys[survey_type].get("submission_date", "")
+                if current_date > existing_date:
+                    latest_surveys[survey_type] = survey
+
+        # Prepare scale summaries
+        scale_summaries = {}
+        for survey_type, survey in latest_surveys.items():
+            scale_summaries[survey_type] = {
+                "score": survey.get("score", None),
+                "summary": survey.get("summary", ""),
+                "submission_date": survey.get("submission_date", ""),
+            }
+
+        # Check if a saved total_summary exists
+        saved_total_summary = await firebase_service.get_total_summary(patient_id)
+        if saved_total_summary:
+            total_summary = saved_total_summary.get("summary")
+        else:
+            # Generate total summary using LLM
+            total_summary = generate_total_summary(scale_summaries, patient_id)
+
+        return {
+            "patient_id": patient_id,
+            "scale_summaries": scale_summaries,
+            "total_summary": total_summary,
+            "generated_at": datetime.utcnow().isoformat(),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate patient report: {str(e)}"
         )

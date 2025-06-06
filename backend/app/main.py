@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config.settings import settings
-from app.api.v1 import auth, survey, dashboard, user
+from app.api.v1 import auth, survey, dashboard, user, patient
 from app.services.firebase import initialize_firebase
 
 # Initialize Firebase on startup
@@ -44,6 +44,10 @@ app.include_router(
 )
 
 app.include_router(user.router, prefix=f"{settings.API_V1_STR}/user", tags=["user"])
+
+app.include_router(
+    patient.router, prefix=f"{settings.API_V1_STR}/patient", tags=["patient"]
+)
 
 
 @app.get("/")

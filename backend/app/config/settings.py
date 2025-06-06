@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     # LLM Configuration - use default value if not found
     GOOGLE_API_KEY: Optional[str] = None
+    MODEL: str = "gemini-2.5-flash-preview-05-20"
 
     # Admin Configuration
     ADMIN_SECRET_KEY: Optional[str] = None

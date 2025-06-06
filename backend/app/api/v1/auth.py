@@ -214,7 +214,15 @@ async def patient_login(request: PatientLoginRequest):
         if patient_doc.exists:
             stored_data = patient_doc.to_dict()
             if stored_data.get("password") == request.password:
-                return {"success": True, "message": "Login successful"}
+                # Create a token for the patient
+                import jwt
+                from app.config.settings import settings
+
+                payload = {"uid": request.medicalRecordNumber, "user_type": "patient"}
+                token = jwt.encode(
+                    payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+                )
+                return {"success": True, "message": "Login successful", "token": token}
             else:
                 return {"success": False, "message": "Invalid password"}
         else:
@@ -226,7 +234,19 @@ async def patient_login(request: PatientLoginRequest):
                     "createdAt": firestore.SERVER_TIMESTAMP,
                 }
             )
-            return {"success": True, "message": "New patient registered and logged in"}
+            # Create a token for the new patient
+            import jwt
+            from app.config.settings import settings
+
+            payload = {"uid": request.medicalRecordNumber, "user_type": "patient"}
+            token = jwt.encode(
+                payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+            )
+            return {
+                "success": True,
+                "message": "New patient registered and logged in",
+                "token": token,
+            }
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

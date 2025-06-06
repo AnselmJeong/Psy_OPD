@@ -7,6 +7,7 @@ import json
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import uuid
+import asyncio
 
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
@@ -352,6 +353,34 @@ class FirebaseService:
         except Exception as e:
             print(f"[DEBUG] Error fetching demographic info: {e}")
             return None
+
+    async def save_total_summary(self, patient_id: str, total_summary: str):
+        ref = (
+            self.db.collection("surveys")
+            .document(patient_id)
+            .collection("required")
+            .document("total_summary")
+        )
+        ref.set(
+            {
+                "summary": total_summary,
+                "survey_type": "TOTAL_SUMMARY",
+                "updated_at": datetime.utcnow(),
+            }
+        )
+
+    async def get_total_summary(self, patient_id: str):
+        ref = (
+            self.db.collection("surveys")
+            .document(patient_id)
+            .collection("required")
+            .document("total_summary")
+        )
+        loop = asyncio.get_event_loop()
+        doc = await loop.run_in_executor(None, ref.get)
+        if doc.exists:
+            return doc.to_dict()
+        return None
 
 
 # Global instance

@@ -1,12 +1,14 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Modal from '@/components/Modal';
 // import { mockAuth, Patient } from '@/lib/mockAuth';
 import { signIn } from '@/lib/firebase';
+import { setToken } from '@/lib/auth';
 
 export default function PatientLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [currentStep, setCurrentStep] = useState<'login' | 'changePassword'>('login');
   
@@ -53,7 +55,15 @@ export default function PatientLoginPage() {
         // Store logged in patient information in localStorage
         localStorage.setItem('loggedInPatient', JSON.stringify({ medicalRecordNumber }));
         setLoggedInPatient({ medicalRecordNumber });
-        router.push('/rating/demographic');
+        
+        // Store authentication token
+        if (data.token) {
+          setToken(data.token, 'patient');
+        }
+
+        // Redirect to the requested page or default to /rating
+        const redirectTo = searchParams.get('redirect') || '/rating';
+        router.push(redirectTo);
       } else {
         setError(data.message || 'Login failed');
       }
@@ -102,7 +112,8 @@ export default function PatientLoginPage() {
       const result = await response.json();
       if (result.message === 'Password updated successfully') {
         setIsModalOpen(false);
-        router.push('/rating/demographic');
+        const redirectTo = searchParams.get('redirect') || '/rating';
+        router.push(redirectTo);
       } else {
         setError(result.message || '비밀번호 변경에 실패했습니다.');
       }
@@ -117,13 +128,14 @@ export default function PatientLoginPage() {
   const handleSkipPasswordChange = () => {
     if (loggedInPatient) {
       setIsModalOpen(false);
-      router.push('/rating/demographic');
+      const redirectTo = searchParams.get('redirect') || '/rating';
+      router.push(redirectTo);
     }
   };
 
   // 로그아웃 핸들러 추가
   const handleLogout = () => {
-    // Remove patient information from localStorage on logout
+    // Remove patient information and token from storage
     localStorage.removeItem('loggedInPatient');
     setLoggedInPatient(null);
     setIsModalOpen(true);
