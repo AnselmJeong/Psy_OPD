@@ -24,6 +24,55 @@ with open(json_file_path, "r", encoding="utf-8") as f:
     diagnostic_criteria = json.load(f)
 
 
+def apply_reverse_scoring(
+    rating_result: dict, scale_name: str, tool_config: dict
+) -> dict:
+    """Apply reverse scoring to specified items"""
+    if "reverse_scoring_items" not in tool_config:
+        return rating_result
+
+    reverse_items = tool_config["reverse_scoring_items"]
+    scoring_range = tool_config.get("scoring_range", [1, 5])
+    min_score, max_score = scoring_range
+
+    # Create a copy to avoid modifying original data
+    processed_result = rating_result.copy()
+
+    print(f"[DEBUG] Applying reverse scoring for {scale_name}")
+    print(f"[DEBUG] Reverse items: {reverse_items}")
+    print(f"[DEBUG] Scoring range: {scoring_range}")
+
+    for key, value in rating_result.items():
+        # Extract item number from key (e.g., "pswq-01" -> 1)
+        try:
+            # Handle various key formats like "pswq-01", "pswq_01", "01", etc.
+            if "-" in key:
+                item_num = int(key.split("-")[-1])
+            elif "_" in key:
+                item_num = int(key.split("_")[-1])
+            else:
+                # Try to extract number from the end of the key
+                import re
+
+                match = re.search(r"(\d+)$", key)
+                if match:
+                    item_num = int(match.group(1))
+                else:
+                    continue
+
+            if item_num in reverse_items:
+                original_score = int(value)
+                reversed_score = (min_score + max_score) - original_score
+                processed_result[key] = reversed_score
+                print(f"[DEBUG] Item {item_num}: {original_score} -> {reversed_score}")
+
+        except (ValueError, IndexError):
+            # Skip items that don't match expected format
+            continue
+
+    return processed_result
+
+
 def get_score_interpretation(
     rating_result: dict,
     scale_name: str,
@@ -42,11 +91,32 @@ def get_score_interpretation(
             "interpretation": interpretation,
         }
 
-        # LLM 리포트 생성
+        # LLM 리포트 생성 (원본 데이터와 처리된 결과 모두 전달)
         if generate_llm_report:
-            result["llm_report"] = generate_report(rating_result, scale_name, result)
+            try:
+                result["llm_report"] = generate_report(
+                    rating_result, scale_name, result
+                )
+            except Exception as e:
+                print(f"[ERROR] Failed to generate LLM report for PSQI: {e}")
+                result["llm_report"] = "리포트 생성 중 오류가 발생했습니다."
 
         return result
+
+    # 해당 도구의 채점 기준 찾기
+    print(f"[DEBUG] Looking for scale_name: '{scale_name}' in scoring criteria")
+    print(
+        f"[DEBUG] Available tools in criteria: {[t['name'] for t in diagnostic_criteria['assessments']]}"
+    )
+
+    tool = next(
+        (t for t in diagnostic_criteria["assessments"] if t["name"] == scale_name), None
+    )
+    if not tool:
+        return {"error": f"지원되지 않는 도구: {scale_name}"}
+
+    # 역채점 처리 적용
+    processed_rating_result = apply_reverse_scoring(rating_result, scale_name, tool)
 
     # 일반적인 도구들의 채점 기준 JSON 처리
     # 총점 계산
@@ -67,19 +137,7 @@ def get_score_interpretation(
                 pass
         return total
 
-    total_score = _numeric_sum(rating_result)
-
-    # 해당 도구의 채점 기준 찾기
-    print(f"[DEBUG] Looking for scale_name: '{scale_name}' in scoring criteria")
-    print(
-        f"[DEBUG] Available tools in criteria: {[t['name'] for t in diagnostic_criteria['assessments']]}"
-    )
-
-    tool = next(
-        (t for t in diagnostic_criteria["assessments"] if t["name"] == scale_name), None
-    )
-    if not tool:
-        return {"error": f"지원되지 않는 도구: {scale_name}"}
+    total_score = _numeric_sum(processed_rating_result)
 
     # 성별에 따른 채점 기준 선택
     category = None
@@ -126,7 +184,7 @@ def get_score_interpretation(
                 condition = rule["additional_condition"]
                 field_name = condition["field"]
                 expected_value = condition["value"]
-                actual_value = rating_result.get(field_name)
+                actual_value = processed_rating_result.get(field_name)
 
                 # Debug information
                 print(f"[DEBUG] Additional condition check for {scale_name}:")
@@ -183,14 +241,19 @@ def get_score_interpretation(
 
     # LLM 리포트 생성
     if generate_llm_report:
-        result["llm_report"] = generate_report(rating_result, scale_name, result)
+        try:
+            result["llm_report"] = generate_report(rating_result, scale_name, result)
+        except Exception as e:
+            print(f"[ERROR] Failed to generate LLM report: {e}")
+            result["llm_report"] = "리포트 생성 중 오류가 발생했습니다."
 
     return result
 
 
 # 테스트
 if __name__ == "__main__":
-    rating_result = {
+    # AUDIT 테스트
+    audit_result = {
         "audit-01": 1,
         "audit-02": 0,
         "audit-03": 0,
@@ -202,9 +265,32 @@ if __name__ == "__main__":
         "audit-09": 0,
         "audit-10": 0,
     }
-    scale_name = "AUDIT"
-    gender = "남"
-    result = get_score_interpretation(
-        rating_result, scale_name, gender, generate_llm_report=True
+    audit_score = get_score_interpretation(
+        audit_result, "AUDIT", "남", generate_llm_report=False
     )
-    print(result)
+    print("AUDIT 결과:", audit_score)
+
+    # PSWQ 테스트 (역채점 포함)
+    pswq_result = {
+        "pswq-01": 1,  # 역채점 문항: 1 -> 5
+        "pswq-02": 5,  # 정상 채점: 5 -> 5
+        "pswq-03": 2,  # 역채점 문항: 2 -> 4
+        "pswq-04": 4,  # 정상 채점: 4 -> 4
+        "pswq-05": 3,  # 정상 채점: 3 -> 3
+        "pswq-06": 5,  # 정상 채점: 5 -> 5
+        "pswq-07": 4,  # 정상 채점: 4 -> 4
+        "pswq-08": 1,  # 역채점 문항: 1 -> 5
+        "pswq-09": 5,  # 정상 채점: 5 -> 5
+        "pswq-10": 2,  # 역채점 문항: 2 -> 4
+        "pswq-11": 1,  # 역채점 문항: 1 -> 5
+        "pswq-12": 5,  # 정상 채점: 5 -> 5
+        "pswq-13": 4,  # 정상 채점: 4 -> 4
+        "pswq-14": 5,  # 정상 채점: 5 -> 5
+        "pswq-15": 4,  # 정상 채점: 4 -> 4
+        "pswq-16": 5,  # 정상 채점: 5 -> 5
+    }
+    pswq_score = get_score_interpretation(
+        pswq_result, "PSWQ", None, generate_llm_report=False
+    )
+    print("PSWQ 결과:", pswq_score)
+    # 예상 총점: 5+5+4+4+3+5+4+5+5+4+5+5+4+5+4+5 = 72

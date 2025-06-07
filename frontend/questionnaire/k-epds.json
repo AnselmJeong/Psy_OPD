@@ -1,0 +1,261 @@
+{
+    "pages": [
+        {
+            "name": "page1",
+            "title": "한국판 출산 후 우울증 척도 (K-EPDS)",
+            "description": "최근 일주일간의 감정과 가장 가까운 항목에 체크해주세요.",
+            "elements": [
+                {
+                    "type": "radiogroup",
+                    "name": "epds_01",
+                    "title": "나는 사물의 재미있는 면을 보고 웃을 수 있었다.",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "예전과 똑같았다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "예전보다 조금 줄었다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "확실히 예전보다 줄었다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "전혀 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_02",
+                    "title": "나는 어떤 일들을 기쁜 마음으로 기다렸다.",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "예전과 똑같았다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "예전보다 조금 줄었다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "확실히 예전보다 줄었다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "거의 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_03",
+                    "title": "일이 잘못됐을 때 공연히 자신을 탓하였다.",
+                    "choices": [
+                        {
+                            "value": 3,
+                            "text": "대부분 그랬다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "가끔 그랬다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "거의 그렇지 않았다."
+                        },
+                        {
+                            "value": 0,
+                            "text": "전혀 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_04",
+                    "title": "나는 특별한 이유 없이 불안하거나 걱정스러웠다.",
+                    "choices": [
+                        {
+                            "value": 0,
+                            "text": "전혀 그렇지 않았다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "거의 그렇지 않았다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "가끔 그랬다."
+                        },
+                        {
+                            "value": 3,
+                            "text": "자주 그랬다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_05",
+                    "title": "특별한 이유없이 무섭거나 안절부절 못하였다.",
+                    "choices": [
+                        {
+                            "value": 3,
+                            "text": "자주 그랬다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "가끔 그랬다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "거의 그렇지 않았다."
+                        },
+                        {
+                            "value": 0,
+                            "text": "전혀 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_06",
+                    "title": "요즘 들어 많은 일들이 힘겹게 느껴졌다.",
+                    "choices": [
+                        {
+                            "value": 3,
+                            "text": "대부분 그러하였고, 일을 전혀 처리할 수 없었다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "가끔 그러하였고, 평소처럼 일을 처리하기가 힘들었다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "그렇지 않았고, 대개는 일을 잘 처리하였다."
+                        },
+                        {
+                            "value": 0,
+                            "text": "그렇지 않았고, 평소와 다름없이 일을 잘 처리하였다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_07",
+                    "title": "너무 불행하다고 느껴서 잠을 잘 잘 수가 없었다.",
+                    "choices": [
+                        {
+                            "value": 3,
+                            "text": "대부분 그랬다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "가끔 그랬다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "거의 그렇지 않았다."
+                        },
+                        {
+                            "value": 0,
+                            "text": "전혀 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_08",
+                    "title": "슬프거나 비참하다고 느꼈다.",
+                    "choices": [
+                        {
+                            "value": 3,
+                            "text": "대부분 그랬다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "가끔 그랬다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "거의 그렇지 않았다."
+                        },
+                        {
+                            "value": 0,
+                            "text": "전혀 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_09",
+                    "title": "불행하다고 느껴서 울었다.",
+                    "choices": [
+                        {
+                            "value": 3,
+                            "text": "대부분 그랬다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "자주 그랬다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "가끔 그랬다."
+                        },
+                        {
+                            "value": 0,
+                            "text": "전혀 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                },
+                {
+                    "type": "radiogroup",
+                    "name": "epds_10",
+                    "title": "자해하고 싶은 마음이 생긴 적이 있다.",
+                    "choices": [
+                        {
+                            "value": 3,
+                            "text": "자주 그랬다."
+                        },
+                        {
+                            "value": 2,
+                            "text": "가끔 그랬다."
+                        },
+                        {
+                            "value": 1,
+                            "text": "거의 그렇지 않았다."
+                        },
+                        {
+                            "value": 0,
+                            "text": "전혀 그렇지 않았다."
+                        }
+                    ],
+                    "isRequired": true,
+                    "colCount": 2
+                }
+            ]
+        }
+    ]
+}

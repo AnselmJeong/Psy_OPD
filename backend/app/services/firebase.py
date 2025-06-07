@@ -285,10 +285,14 @@ class FirebaseService:
     ) -> List[Dict[str, Any]]:
         """Get survey trend data for visualization"""
         try:
+            print(
+                f"[DEBUG] Firebase: Getting trends for {patient_id}, survey_type: {survey_type}"
+            )
             categories = ["required", "elective"]
             trend_data: List[Dict[str, Any]] = []
 
             for category in categories:
+                print(f"[DEBUG] Checking category: {category}")
                 col_ref = (
                     self.db.collection("surveys")
                     .document(patient_id)
@@ -296,20 +300,34 @@ class FirebaseService:
                 ).where("survey_type", "==", survey_type)
 
                 docs = col_ref.order_by("submission_date").stream()
+                doc_count = 0
                 for doc in docs:
+                    doc_count += 1
                     data = doc.to_dict()
+                    print(f"[DEBUG] Found doc {doc.id} with score: {data.get('score')}")
+
+                    # Handle score safely
+                    score = data.get("score")
+                    if score is None:
+                        print(f"[WARNING] No score found in doc {doc.id}")
+                        score = 0
+
                     trend_point = {
                         "submission_date": data.get("submission_date").isoformat()
                         if hasattr(data.get("submission_date"), "isoformat")
                         else str(data.get("submission_date")),
-                        "score": data.get("score", 0),
+                        "score": float(score) if score is not None else 0.0,
                     }
                     trend_data.append(trend_point)
 
+                print(f"[DEBUG] Found {doc_count} docs in category {category}")
+
             # Ensure results sorted by date
             trend_data.sort(key=lambda x: x.get("submission_date", ""))
+            print(f"[DEBUG] Total trend data points: {len(trend_data)}")
             return trend_data
         except Exception as e:
+            print(f"[ERROR] Firebase get_survey_trends error: {e}")
             raise HTTPException(
                 status_code=400, detail=f"Failed to get survey trends: {str(e)}"
             )

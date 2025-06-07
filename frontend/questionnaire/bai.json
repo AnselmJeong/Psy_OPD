@@ -1,121 +1,119 @@
 {
     "pages": [
         {
-            "name": "page1",
-            "title": "Beck Anxiety Inventory (백불안척도)",
-            "description": "다음의 21문항을 읽으시고 당신의 현재 상태에 해당하는 것을 0~3점으로 표시해 주십시오. (오늘을 포함하여 지난 한 주간의 경험)",
+            "name": "bai",
+            "title": "Beck Anxiety Inventory (BAI)",
+            "description": "다음 문항을 잘 읽고, 오늘을 포함해서 지난 한주 동안 자신의 상태를 가장 잘 나타낸다고 생각하는 번호에 표시하여 주십시오.",
             "elements": [
                 {
                     "type": "matrix",
-                    "name": "bai-scale",
-                    "title": "각 문항을 읽고 해당하는 정도를 선택해 주세요",
+                    "name": "bai_matrix",
+                    "title": "지난 1주일 동안 아래 증상으로 얼마나 고생하셨습니까?",
                     "columns": [
                         {
                             "value": 0,
-                            "text": "전혀<br>느끼지<br>않았다"
+                            "text": "전혀 느끼지\n않았다"
                         },
                         {
                             "value": 1,
-                            "text": "조금<br>느꼈다"
+                            "text": "조금 느꼈다"
                         },
                         {
                             "value": 2,
-                            "text": "상당히<br>느꼈다"
+                            "text": "상당히 느꼈다"
                         },
                         {
                             "value": 3,
-                            "text": "심하게<br>느꼈다"
+                            "text": "심하게 느꼈다"
                         }
                     ],
                     "rows": [
                         {
-                            "value": "bai-01",
-                            "text": "가끔씩 몸이 저리고 쑤시며 감각이 마비된 느낌을 받는다."
+                            "value": "bai_01",
+                            "text": "가끔씩 몸이 저리고 쑤시면 감각이 마비된 느낌을 받는다."
                         },
                         {
-                            "value": "bai-02",
+                            "value": "bai_02",
                             "text": "흥분된 느낌을 받는다."
                         },
                         {
-                            "value": "bai-03",
-                            "text": "가끔씩 다리가 떨리고 흔들린다."
+                            "value": "bai_03",
+                            "text": "가끔씩 다리가 떨리곤 한다."
                         },
                         {
-                            "value": "bai-04",
+                            "value": "bai_04",
                             "text": "편안하게 쉴 수가 없다."
                         },
                         {
-                            "value": "bai-05",
+                            "value": "bai_05",
                             "text": "매우 나쁜 일이 일어날 것 같은 두려움을 느낀다."
                         },
                         {
-                            "value": "bai-06",
+                            "value": "bai_06",
                             "text": "어지러움(현기증)을 느낀다."
                         },
                         {
-                            "value": "bai-07",
+                            "value": "bai_07",
                             "text": "가끔씩 심장이 두근거리고 빨리 뛴다."
                         },
                         {
-                            "value": "bai-08",
-                            "text": "침착하지 못한다."
+                            "value": "bai_08",
+                            "text": "침착하지 못하다."
                         },
                         {
-                            "value": "bai-09",
+                            "value": "bai_09",
                             "text": "자주 겁을 먹고 무서움을 느낀다."
                         },
                         {
-                            "value": "bai-10",
-                            "text": "신경이 과민 되어 있다."
+                            "value": "bai_10",
+                            "text": "신경이 과민되어 왔다."
                         },
                         {
-                            "value": "bai-11",
+                            "value": "bai_11",
                             "text": "가끔씩 숨이 막히고 질식할 것 같다."
                         },
                         {
-                            "value": "bai-12",
+                            "value": "bai_12",
                             "text": "자주 손이 떨린다."
                         },
                         {
-                            "value": "bai-13",
+                            "value": "bai_13",
                             "text": "안절부절못해 한다."
                         },
                         {
-                            "value": "bai-14",
+                            "value": "bai_14",
                             "text": "미칠 것 같은 두려움을 느낀다."
                         },
                         {
-                            "value": "bai-15",
-                            "text": "가끔씩 숨쉬기 곤란할 때가 있다."
+                            "value": "bai_15",
+                            "text": "가끔씩 숨쉬기 곤란할 떄가 있다."
                         },
                         {
-                            "value": "bai-16",
+                            "value": "bai_16",
                             "text": "죽을 것 같은 두려움을 느낀다."
                         },
                         {
-                            "value": "bai-17",
+                            "value": "bai_17",
                             "text": "불안한 상태에 있다."
                         },
                         {
-                            "value": "bai-18",
-                            "text": "자주 소화가 잘 안되고 뱃속이 불편하다."
+                            "value": "bai_18",
+                            "text": "자주 소화가 잘 안 되고, 뱃속이 불편하다."
                         },
                         {
-                            "value": "bai-19",
+                            "value": "bai_19",
                             "text": "가끔씩 기절할 것 같다."
                         },
                         {
-                            "value": "bai-20",
-                            "text": "자주 얼굴이 붉어지고 화가난다."
+                            "value": "bai_20",
+                            "text": "자주 얼굴이 붉어지곤 한다."
                         },
                         {
-                            "value": "bai-21",
-                            "text": "땀을 많이 흘린다.(더위로 인한 경우는 제외)"
+                            "value": "bai_21",
+                            "text": "땀을 많이 흘린다 (더위로 인한 경우는 제외)."
                         }
                     ],
-                    "alternateRows": true,
-                    "eachRowRequired": true,
-                    "isRequired": true
+                    "isAllRowRequired": true
                 }
             ]
         }

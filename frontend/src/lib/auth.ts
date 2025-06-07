@@ -2,6 +2,9 @@
 const PATIENT_TOKEN_KEY = 'patient_token';
 const CLINICIAN_TOKEN_KEY = 'clinician_token';
 
+// API 기본 URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 // Token types
 export type TokenType = 'patient' | 'clinician';
 
@@ -36,12 +39,15 @@ export const authenticatedFetch = async (
     throw new Error('인증이 필요합니다.');
   }
 
+  // URL이 상대 경로인 경우 API_BASE_URL을 추가
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+
   const headers = {
     ...options.headers,
     'Authorization': `Bearer ${token}`,
   };
 
-  const response = await fetch(url, {
+  const response = await fetch(fullUrl, {
     ...options,
     headers,
   });

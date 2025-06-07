@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth as firebase_auth
 from app.config.settings import settings
+import jwt
 
 from app.services.firebase import firebase_service
 from app.models.auth import TokenData
@@ -19,7 +20,7 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> TokenData:
     """
-    Get current user from JWT token
+    Get current user from JWT token (supports both Firebase tokens and custom JWT tokens)
 
     Args:
         credentials: HTTP authorization credentials
@@ -31,17 +32,36 @@ async def get_current_user(
         HTTPException: If token is invalid
     """
     token = credentials.credentials
+
+    # First try Firebase token verification
     try:
-        # Firebase Admin SDK로 토큰 검증
         decoded_token = firebase_auth.verify_id_token(token)
         user_id = decoded_token.get("email") or decoded_token.get("uid")
-        # user_type은 custom claim이 없으면 별도 로직 필요 (여기선 clinician만 로그인하니 clinician으로 고정)
         user_type = "clinician" if user_id and not user_id.isdigit() else "patient"
-        print(f"[DEBUG] Token verified: user_id={user_id}, user_type={user_type}")
+        print(
+            f"[DEBUG] Firebase token verified: user_id={user_id}, user_type={user_type}"
+        )
         return TokenData(user_id=user_id, user_type=user_type)
-    except Exception as e:
-        print(f"[DEBUG] Token verification failed: {e}")
-        raise HTTPException(status_code=401, detail=f"Invalid Firebase token: {str(e)}")
+    except Exception as firebase_error:
+        print(f"[DEBUG] Firebase token verification failed: {firebase_error}")
+
+        # If Firebase fails, try custom JWT verification for patients
+        try:
+            decoded_payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
+            user_id = decoded_payload.get("uid")
+            user_type = decoded_payload.get("user_type", "patient")
+            print(
+                f"[DEBUG] Custom JWT token verified: user_id={user_id}, user_type={user_type}"
+            )
+            return TokenData(user_id=user_id, user_type=user_type)
+        except Exception as jwt_error:
+            print(f"[DEBUG] Custom JWT token verification failed: {jwt_error}")
+            raise HTTPException(
+                status_code=401,
+                detail=f"Invalid token: Firebase error - {str(firebase_error)}, JWT error - {str(jwt_error)}",
+            )
 
 
 async def get_current_patient(
@@ -115,14 +135,25 @@ def verify_patient_access(patient_id: str, current_user: TokenData) -> bool:
     Raises:
         HTTPException: If access is denied
     """
+    print(f"[DEBUG] verify_patient_access - patient_id: {patient_id}")
+    print(
+        f"[DEBUG] verify_patient_access - current_user.user_id: {current_user.user_id}"
+    )
+    print(
+        f"[DEBUG] verify_patient_access - current_user.user_type: {current_user.user_type}"
+    )
+
     # Clinicians can access any patient's data
     if current_user.user_type == "clinician":
+        print(f"[DEBUG] Access granted: user is clinician")
         return True
 
     # Patients can only access their own data
     if current_user.user_type == "patient" and current_user.user_id == patient_id:
+        print(f"[DEBUG] Access granted: patient accessing own data")
         return True
 
+    print(f"[DEBUG] Access denied: insufficient permissions")
     raise HTTPException(
         status_code=403, detail="Access denied: insufficient permissions"
     )

@@ -48,9 +48,12 @@
           "type": "text",
           "name": "birth_date",
           "title": "출생년도",
-          "inputType": "date",
           "maxValueExpression": "today()",
-          "isRequired": true
+          "isRequired": true,
+          "maskType": "date",
+          "maskSettings": {
+            "pattern": "yyyy/mm/dd"
+          }
         },
         {
           "type": "radiogroup",

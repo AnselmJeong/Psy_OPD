@@ -9,6 +9,7 @@ import { getCurrentUserToken } from "@/lib/firebase";
   Don't forget to import or reference the `survey-core.css` style sheet
   as described in the Get Started with SurveyJS article for your framework
 */
+import { ContrastLight }  from "survey-core/themes";
 import { LayeredLight }  from "survey-core/themes";
 import { Model } from "survey-core";
 import { Survey } from "survey-react-ui";
@@ -17,7 +18,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function RatingPage({schema, onComplete, scale}: {schema: object, onComplete?: (data: any) => void, scale: string}) {
   const survey = new Model(schema);
-  survey.applyTheme(LayeredLight);
+  survey.applyTheme(ContrastLight);
 
   // Instantiate `markdown-it`
   const converter = markdownit({

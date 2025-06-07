@@ -2,62 +2,49 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-
-const RATING_ORDER = [
-  'demographic',
-  'past-history',
-  'audit',
-  'psqi',
-  'bdi',
-  'bai',
-  'k-mdq',
-];
+import { 
+  RATING_ORDER, 
+  AVAILABLE_SCALES,
+  getScaleInfo,
+  getScaleConfig,
+  type ScaleConfig 
+} from "@/constants/scales";
 
 const RatingPage = dynamic(() => import("@/components/Rating"), {
   ssr: false
 });
 
-// Available scales mapping
-const AVAILABLE_SCALES: Record<string, { 
-  title: string; 
-  description: string; 
-  filename: string 
-}> = {
-  demographic: {
-    title: "Demographic Information",
-    description: "Please provide your basic information to help us better understand your needs.",
-    filename: "demographic.json"
-  },
-  psqi: {
-    title: "Pittsburgh Sleep Quality Index (PSQI)",
-    description: "This questionnaire will help us understand your sleep patterns and quality.",
-    filename: "psqi.json"
-  },
-  bdi: {
-    title: "Beck Depression Inventory (BDI)",
-    description: "This assessment helps evaluate depression symptoms.",
-    filename: "bdi.json"
-  },
-  "past-history": {
-    title: "Past Medical History",
-    description: "Please provide information about your medical history.",
-    filename: "past_history.json"
-  },
-  bai: {
-    title: "Beck Anxiety Inventory (BAI)",
-    description: "This assessment helps evaluate anxiety symptoms and related physical sensations.",
-    filename: "bai.json"
-  },
-  audit: {
-    title: "AUDIT (Alcohol Use Disorders Identification Test)",
-    description: "This assessment helps identify alcohol use patterns and potential alcohol-related problems.",
-    filename: "audit.json"
-  },
-  "k-mdq": {
-    title: "K-MDQ (한국형 조울병 선별검사지)",
-    description: "This assessment helps screen for bipolar disorder and manic episodes.",
-    filename: "k-mdq.json"
+// Helper function to get scale display information
+const getScaleDisplayInfo = (scaleKey: string) => {
+  const scaleInfo = getScaleInfo(scaleKey);
+  const scaleConfig = getScaleConfig(scaleKey);
+  
+  if (!scaleInfo || !scaleConfig) {
+    return null;
   }
+
+  // Create enhanced descriptions for better user experience
+  const enhancedDescriptions: Record<string, string> = {
+    demographic: "당신의 기본 정보를 제공해 주시면, 환자분의 필요를 더 잘 이해하는데 도움이 됩니다.",
+    psqi: "당신의 수면 패턴과 질을 평가합니다.",
+    bdi: "우울증 증상을 평가합니다.",
+    "past-history": "당신의 과거력과 가족력을 제공해 주시면, 환자분의 필요를 더 잘 이해하는데 도움이 됩니다.",
+    bai: "주로 불안증과 관련된 신체적 이상 감각을 평가합니다.",
+    audit: "음주 사용 패턴과 관련된 문제를 식별합니다.",
+    "k-mdq": "감정기복 및 양극성 장애 관련 증상을 평가합니다.",
+    "oci-r": "강박사고나 행동을 평가합니다.",
+    "k-epds": "산후 우울증 증상을 평가합니다.",
+    "gds-sf": "노년층의 우울증 증상을 평가합니다.",
+    "pdss-sr": "공황장애 증상과 심각도를 평가합니다.",
+    "pcl-k-5": "외상 후 스트레스 장애 증상을 평가합니다.",
+    "pswq": "평소 걱정과 불안 성향을 평가합니다."
+  };
+
+  return {
+    title: scaleConfig.title,
+    description: enhancedDescriptions[scaleKey] || scaleInfo.description,
+    filename: scaleConfig.file
+  };
 };
 
 export default function ScalePage() {
@@ -80,8 +67,18 @@ export default function ScalePage() {
           return;
         }
         const scaleConfig = AVAILABLE_SCALES[scale];
-        const schemaModule = await import(`../../../../questionnaire/${scaleConfig.filename}`);
-        setSchema(schemaModule.default);
+        const displayInfo = getScaleDisplayInfo(scale);
+        
+        if (!displayInfo) {
+          throw new Error(`Scale "${scale}" configuration not found`);
+        }
+        
+        const response = await fetch(`/questionnaire/${scaleConfig.file}`);
+        if (!response.ok) {
+          throw new Error(`Failed to load questionnaire file: ${scaleConfig.file}`);
+        }
+        const schemaData = await response.json();
+        setSchema(schemaData);
       } catch (err) {
         console.error('Error loading schema:', err);
         setError(`Failed to load rating scale "${scale}". Please check if the file exists.`);
@@ -170,7 +167,22 @@ export default function ScalePage() {
     );
   }
 
-  const scaleConfig = AVAILABLE_SCALES[scale];
+  const scaleConfig = getScaleDisplayInfo(scale);
+
+  if (!scaleConfig) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+              <h1 className="text-2xl font-bold text-red-800 mb-2">Scale Not Found</h1>
+              <p className="text-red-600">The requested assessment scale "{scale}" is not available.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

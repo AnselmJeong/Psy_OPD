@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Modal from '@/components/Modal';
 import { setToken } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DoctorLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [currentStep, setCurrentStep] = useState<'login' | 'changePassword'>('login');
   
@@ -62,6 +64,52 @@ export default function DoctorLoginPage() {
         
         // Store authentication token
         setToken(data.token, 'clinician');
+
+        // Update AuthContext with temporary name, real name will be fetched
+        login({
+          id: doctorId,
+          name: doctorId,
+          type: 'doctor'
+        });
+
+        // 로그인 후 실제 이름 가져오기 시도
+        try {
+          const userResponse = await fetch(`http://localhost:8000/api/v1/user/${doctorId}`, {
+            headers: {
+              'Authorization': `Bearer ${data.token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            const realName = userData.demographic_info?.name;
+            if (realName) {
+              login({
+                id: doctorId,
+                name: realName,
+                displayName: realName,
+                type: 'doctor'
+              });
+            } else {
+              // 이메일에서 이름 추출
+              const emailName = doctorId.split('@')[0];
+              const formattedName = emailName
+                .replace(/[._-]/g, ' ')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+              login({
+                id: doctorId,
+                name: formattedName,
+                displayName: formattedName,
+                type: 'doctor'
+              });
+            }
+          }
+        } catch (nameError) {
+          console.log('실제 이름을 가져올 수 없습니다:', nameError);
+        }
 
         // Redirect to the requested page or default to /doctor/dashboard
         const redirectTo = searchParams.get('redirect') || '/doctor/dashboard';
@@ -119,7 +167,7 @@ export default function DoctorLoginPage() {
       } else {
         setError(result.message || '비밀번호 변경에 실패했습니다.');
       }
-    } catch (error) {
+    } catch {
       setError('비밀번호 변경 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);

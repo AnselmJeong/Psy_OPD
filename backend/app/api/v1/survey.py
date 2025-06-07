@@ -160,12 +160,27 @@ async def get_patient_surveys(
     Retrieve a patient's survey results and summaries
     """
     try:
+        # Debug logging
+        print(f"[DEBUG] Getting surveys for patient_id: {patient_id}")
+        print(
+            f"[DEBUG] Current user: {current_user.user_id}, type: {current_user.user_type}"
+        )
+        print(f"[DEBUG] Survey type filter: {survey_type}")
+
         # Verify access permissions
         verify_patient_access(patient_id, current_user)
 
+        # Map survey type from frontend format to backend format if provided
+        mapped_survey_type = None
+        if survey_type:
+            mapped_survey_type = SURVEY_TYPE_MAPPING.get(
+                survey_type.lower(), survey_type.upper()
+            )
+            print(f"[DEBUG] Mapped survey type: {survey_type} -> {mapped_survey_type}")
+
         # Get surveys from Firebase
         surveys = await firebase_service.get_patient_surveys(
-            patient_id, survey_type, date
+            patient_id, mapped_survey_type, date
         )
 
         # Convert to response model
@@ -173,11 +188,15 @@ async def get_patient_surveys(
         for survey in surveys:
             result = SurveyResult(
                 survey_id=survey["survey_id"],
+                patient_id=patient_id,
                 survey_type=survey["survey_type"],
-                submission_date=survey["submission_date"],
-                score=survey["score"],
-                summary=survey["summary"],
-                responses=survey["responses"],
+                timestamp=survey["submission_date"],
+                submission_date=survey["submission_date"],  # Frontend compatibility
+                score=survey.get("score"),  # Use .get() to handle missing scores
+                summary=survey.get("summary", ""),  # Use .get() with default
+                responses=survey.get("responses", {}),  # Use .get() with default
+                subscores=survey.get("subscores"),
+                interpretation=survey.get("interpretation"),
             )
             results.append(result)
 

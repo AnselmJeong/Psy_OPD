@@ -129,19 +129,19 @@ a:focus-visible {
 }
 
 .sd-table__cell:not(.sd-table__cell--empty):not(.sd-table__cell--actions):not(.sd-table__cell--row-text):not(:empty) {
-  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+  min-width: calc(8 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
 }
 
 .sd-table__cell--header:not(.sd-table__cell--empty) {
-  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+  min-width: calc(8 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
 }
 
 .sd-matrixdropdown .sd-table__cell--header.sd-table__cell--empty {
-  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+  min-width: calc(8 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
 }
 
 .sd-matrixdropdown .sd-table__cell--header:not(.sd-table__cell--empty) {
-  min-width: calc(10 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
+  min-width: calc(8 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;
 }
 .sd-matrixdropdown .sd-table__cell--header:not(.sd-table__cell--empty).sd-table__cell--dropdown, .sd-matrixdropdown .sd-table__cell--header:not(.sd-table__cell--empty).sd-table__cell--rating {
   min-width: calc(20 * (var(--sjs-base-unit, var(--base-unit, 8px)))) !important;

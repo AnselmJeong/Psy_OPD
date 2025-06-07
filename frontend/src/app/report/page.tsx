@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { ReportSummary } from '@/components/ReportSummary';
 import { TotalSummary } from '@/components/TotalSummary';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { authenticatedFetch, isAuthenticated } from '@/lib/auth';
+import { authenticatedFetch } from '@/lib/auth';
 
 interface ScaleSummary {
   score: number | null;
@@ -24,19 +25,23 @@ interface ReportData {
 
 export default function ReportPage() {
   const router = useRouter();
+  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // 인증 로딩이 완료된 후에 검사
+    if (authLoading) return;
+
+    // 인증되지 않았거나 환자가 아닌 경우 로그인 페이지로 리다이렉트
+    if (!isAuthenticated || user?.type !== 'patient') {
+      router.push('/patient-login');
+      return;
+    }
+
     const fetchReport = async () => {
       try {
-        // Check if patient is authenticated
-        if (!isAuthenticated('patient')) {
-          router.push('/login?redirect=/report');
-          return;
-        }
-
         // Fetch the report using authenticated fetch
         const response = await authenticatedFetch(
           `/api/v1/patient/report`,
@@ -60,9 +65,10 @@ export default function ReportPage() {
     };
 
     fetchReport();
-  }, [router]);
+  }, [router, isAuthenticated, user, authLoading]);
 
-  if (loading) {
+  // 인증 로딩 중일 때
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin" />

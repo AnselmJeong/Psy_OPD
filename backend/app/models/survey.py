@@ -35,6 +35,7 @@ class SurveyResult(BaseModel):
     survey_type: str
     responses: Dict[str, Any]
     timestamp: str
+    submission_date: Optional[str] = None  # For compatibility with frontend
     score: Optional[float] = None
     interpretation: Optional[str] = None
     summary: Optional[str] = None

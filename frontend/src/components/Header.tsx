@@ -1,6 +1,17 @@
+"use client";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
+  const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,30 +26,53 @@ export default function Header() {
             <span className="text-xl font-semibold text-gray-800">Mindful Path</span>
           </Link>
 
-          {/* Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <Link href="/about" className="text-gray-600 hover:text-gray-900 font-medium">
-              About
-            </Link>
-            <Link href="/services" className="text-gray-600 hover:text-gray-900 font-medium">
-              Services
-            </Link>
-          </nav>
+          {/* Navigation - 환자 로그인 시에만 표시 */}
+          {isAuthenticated && user?.type === 'patient' && (
+            <nav className="hidden md:flex space-x-8">
+              <Link href="/rating" className="text-gray-600 hover:text-gray-900 font-medium">
+                자가 평가
+              </Link>
+              <Link href="/report" className="text-gray-600 hover:text-gray-900 font-medium">
+                결과 보기
+              </Link>
+            </nav>
+          )}
 
-          {/* Auth Buttons */}
+          {/* Auth Section */}
           <div className="flex items-center space-x-4">
-            <Link 
-              href="/login" 
-              className="text-gray-600 hover:text-gray-900 font-medium"
-            >
-              Login
-            </Link>
-            <Link 
-              href="/signup" 
-              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors font-medium"
-            >
-              Sign Up
-            </Link>
+            {isAuthenticated && user ? (
+              <>
+                <span className="text-gray-700 font-medium">
+                  {user.type === 'doctor' 
+                    ? (user.displayName || user.id.includes('@') 
+                        ? user.id.split('@')[0].replace(/[._-]/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+                        : user.name.replace(/^Dr\.\s/, ''))
+                    : (user.displayName || user.name.replace(/^환자\s/, ''))
+                  } 님
+                </span>
+                <button 
+                  onClick={handleLogout}
+                  className="text-gray-600 hover:text-gray-900 font-medium"
+                >
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link 
+                  href="/patient-login" 
+                  className="bg-green-200 hover:bg-green-300 text-green-800 font-semibold px-4 py-2 rounded-full transition-colors"
+                >
+                  환자 로그인
+                </Link>
+                <Link 
+                  href="/doctor-login" 
+                  className="bg-blue-200 hover:bg-blue-300 text-blue-800 font-semibold px-4 py-2 rounded-full transition-colors"
+                >
+                  의사 로그인
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

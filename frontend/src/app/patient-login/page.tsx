@@ -1,14 +1,14 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Modal from '@/components/Modal';
-// import { mockAuth, Patient } from '@/lib/mockAuth';
-import { signIn } from '@/lib/firebase';
-import { setToken } from '@/lib/auth';
+import { setToken, removeToken } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function PatientLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [currentStep, setCurrentStep] = useState<'login' | 'changePassword'>('login');
   
@@ -61,9 +61,88 @@ export default function PatientLoginPage() {
           setToken(data.token, 'patient');
         }
 
-        // Redirect to the requested page or default to /rating
-        const redirectTo = searchParams.get('redirect') || '/rating';
-        router.push(redirectTo);
+        // Update AuthContext with temporary name (병록번호)
+        login({
+          id: medicalRecordNumber,
+          name: medicalRecordNumber,
+          type: 'patient'
+        });
+
+        // 로그인 후 실제 이름 가져오기 시도
+        try {
+          let finalName = medicalRecordNumber; // 기본값: 병록번호
+          
+          // 먼저 프로필에서 이름 가져오기 시도
+          const profileResponse = await fetch(`http://localhost:8000/api/v1/user/${medicalRecordNumber}`, {
+            headers: {
+              'Authorization': `Bearer ${data.token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            const realName = profileData.demographic_info?.name;
+            
+            if (realName) {
+              finalName = realName;
+              console.log('프로필에서 이름을 가져왔습니다:', realName);
+            } else {
+              // 프로필에 이름이 없으면 demographic 설문에서 가져오기
+              try {
+                const demographicResponse = await fetch(`http://localhost:8000/api/v1/survey/patient/${medicalRecordNumber}?survey_type=demographic`, {
+                  headers: {
+                    'Authorization': `Bearer ${data.token}`,
+                    'Content-Type': 'application/json',
+                  },
+                });
+                
+                if (demographicResponse.ok) {
+                  const demographicData = await demographicResponse.json();
+                  if (demographicData && demographicData.length > 0) {
+                    const latestDemographic = demographicData[0];
+                    const demographicName = latestDemographic.responses?.name || 
+                                          latestDemographic.responses?.이름 || 
+                                          latestDemographic.responses?.환자명;
+                    
+                    if (demographicName) {
+                      finalName = demographicName;
+                      console.log('설문에서 이름을 가져왔습니다:', demographicName);
+                    }
+                  }
+                }
+              } catch (demographicError) {
+                console.log('설문 데이터를 가져올 수 없습니다. 병록번호를 사용합니다.');
+              }
+            }
+          }
+          
+          // 최종 이름 설정 (실제 이름이 있으면 이름, 없으면 병록번호)
+          login({
+            id: medicalRecordNumber,
+            name: finalName,
+            displayName: finalName !== medicalRecordNumber ? finalName : undefined,
+            type: 'patient'
+          });
+          
+        } catch (nameError) {
+          console.log('실제 이름을 가져올 수 없습니다. 병록번호를 사용합니다:', nameError);
+          // 에러가 발생해도 병록번호는 이미 설정되어 있으므로 별도 처리 불필요
+        }
+
+        // Check if password is default (8 digits, likely birthdate)
+        const isDefaultPassword = /^\d{8}$/.test(password);
+        
+        if (isDefaultPassword && data.is_default_password !== false) {
+          // Show password change form for default passwords
+          setCurrentStep('changePassword');
+          setCurrentPassword(password); // 현재 입력한 비밀번호를 자동으로 채움
+          setError(''); // Clear any previous errors
+        } else {
+          // Redirect to the requested page or default to /rating
+          const redirectTo = searchParams.get('redirect') || '/rating';
+          router.push(redirectTo);
+        }
       } else {
         setError(data.message || 'Login failed');
       }
@@ -117,7 +196,7 @@ export default function PatientLoginPage() {
       } else {
         setError(result.message || '비밀번호 변경에 실패했습니다.');
       }
-    } catch (error) {
+    } catch {
       setError('비밀번호 변경 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
@@ -137,6 +216,7 @@ export default function PatientLoginPage() {
   const handleLogout = () => {
     // Remove patient information and token from storage
     localStorage.removeItem('loggedInPatient');
+    removeToken('patient'); // 토큰도 제거
     setLoggedInPatient(null);
     setIsModalOpen(true);
     setCurrentStep('login');
@@ -212,6 +292,8 @@ export default function PatientLoginPage() {
       <div className="text-center">
         <p className="text-xs text-gray-500">
           테스트용 계정: 2024001 (비밀번호: newpassword123) 또는 2024002 (비밀번호: 19750815)
+          <br />
+          * 8자리 숫자 비밀번호는 기본 비밀번호로 간주되어 변경을 권장합니다.
         </p>
       </div>
     </form>
@@ -220,11 +302,13 @@ export default function PatientLoginPage() {
   const renderPasswordChangeForm = () => (
     <form onSubmit={handleChangePassword} className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">비밀번호 변경</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">비밀번호 변경 권장</h3>
         <p className="text-sm text-gray-600">
-          보안을 위해 기본 비밀번호를 변경하는 것을 권장합니다.
+          기본 비밀번호(생년월일)로 로그인하셨습니다.
           <br />
-          나중에 변경하거나 지금 건너뛸 수도 있습니다.
+          보안을 위해 새로운 비밀번호로 변경하는 것을 강력히 권장합니다.
+          <br />
+          지금 변경하거나 나중에 변경하실 수 있습니다.
         </p>
       </div>
 
@@ -233,6 +317,21 @@ export default function PatientLoginPage() {
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
+
+      <div>
+        <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-2">
+          현재 비밀번호
+        </label>
+        <input
+          type="password"
+          id="currentPassword"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="현재 비밀번호를 입력하세요"
+          required
+        />
+      </div>
 
       <div>
         <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
@@ -270,14 +369,14 @@ export default function PatientLoginPage() {
           onClick={handleSkipPasswordChange}
           className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
         >
-          나중에 변경
+          지금은 건너뛰기
         </button>
         <button
           type="submit"
           disabled={isLoading}
           className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isLoading ? '변경 중...' : '비밀번호 변경'}
+          {isLoading ? '변경 중...' : '지금 변경하기'}
         </button>
       </div>
     </form>
@@ -297,7 +396,7 @@ export default function PatientLoginPage() {
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        title={currentStep === 'login' ? '환자 로그인' : '비밀번호 변경'}
+        title={currentStep === 'login' ? '환자 로그인' : '비밀번호 변경 권장'}
       >
         {currentStep === 'login' ? renderLoginForm() : renderPasswordChangeForm()}
       </Modal>

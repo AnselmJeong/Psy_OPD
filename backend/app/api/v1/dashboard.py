@@ -2,9 +2,10 @@
 Dashboard endpoints (Clinician-only)
 """
 
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter, HTTPException, Depends, Query
-from datetime import datetime
+from datetime import datetime, date
+from pydantic import BaseModel
 
 from app.models.survey import PatientSurveyList, TrendData
 from app.models.auth import TokenData
@@ -13,6 +14,358 @@ from app.dependencies.auth import get_current_clinician
 from app.services.llm import generate_total_summary
 
 router = APIRouter()
+
+# Define assessment categories based on frontend rating page
+REQUIRED_ASSESSMENTS = ["BDI", "BAI", "AUDIT", "PSQI", "K-MDQ"]
+ELECTIVE_ASSESSMENTS = ["OCI-R", "PCL-K-5"]
+
+# Cache for patient demographic info to reduce Firebase calls
+_patient_info_cache: Dict[str, Dict] = {}
+_cache_timestamp: Dict[str, datetime] = {}
+CACHE_EXPIRY_HOURS = 24  # Cache expires after 24 hours
+
+
+def clear_expired_cache():
+    """Clear expired cache entries"""
+    current_time = datetime.now()
+    expired_keys = [
+        key
+        for key, timestamp in _cache_timestamp.items()
+        if (current_time - timestamp).total_seconds() > CACHE_EXPIRY_HOURS * 3600
+    ]
+
+    for key in expired_keys:
+        _patient_info_cache.pop(key, None)
+        _cache_timestamp.pop(key, None)
+
+
+@router.post("/clear-cache")
+async def clear_patient_cache(
+    current_user: TokenData = Depends(get_current_clinician),
+):
+    """Clear patient demographic info cache manually (admin only)"""
+    global _patient_info_cache, _cache_timestamp
+    _patient_info_cache.clear()
+    _cache_timestamp.clear()
+    return {"message": "Patient cache cleared successfully"}
+
+
+@router.get("/cache-status")
+async def get_cache_status(
+    current_user: TokenData = Depends(get_current_clinician),
+):
+    """Get current cache status for patient demographic info"""
+    clear_expired_cache()  # Clean up first
+
+    cache_info = {
+        "total_cached_patients": len(_patient_info_cache),
+        "cache_expiry_hours": CACHE_EXPIRY_HOURS,
+        "cached_patients": [],
+    }
+
+    current_time = datetime.now()
+    for patient_id, timestamp in _cache_timestamp.items():
+        time_since_cached = (current_time - timestamp).total_seconds() / 3600  # hours
+        cache_info["cached_patients"].append(
+            {
+                "patient_id": patient_id,
+                "cached_hours_ago": round(time_since_cached, 2),
+                "expires_in_hours": round(CACHE_EXPIRY_HOURS - time_since_cached, 2),
+            }
+        )
+
+    return cache_info
+
+
+@router.post("/preload-cache")
+async def preload_patient_cache(
+    current_user: TokenData = Depends(get_current_clinician),
+):
+    """Preload patient demographic info cache for all patients"""
+    try:
+        # Get all patient IDs from survey data
+        patients_data = await firebase_service.get_all_patients_surveys()
+        patient_ids = [p["patient_id"] for p in patients_data]
+
+        # Preload demographic info for all patients
+        loaded_count = 0
+        errors = []
+
+        for patient_id in patient_ids:
+            try:
+                await get_patient_demographic_info_cached(patient_id)
+                loaded_count += 1
+            except Exception as e:
+                errors.append(f"Patient {patient_id}: {str(e)}")
+
+        return {
+            "message": f"Cache preloaded for {loaded_count} patients",
+            "total_patients": len(patient_ids),
+            "loaded_successfully": loaded_count,
+            "errors_count": len(errors),
+            "errors": errors[:5] if errors else [],  # Show first 5 errors only
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to preload cache: {str(e)}"
+        )
+
+
+def calculate_age_from_birth_date(birth_date_str: str) -> int:
+    """Calculate age from birth date string (YYYY-MM-DD or YYYYMMDD format)"""
+    try:
+        if "-" in birth_date_str:
+            # YYYY-MM-DD format
+            year, month, day = map(int, birth_date_str.split("-"))
+        elif len(birth_date_str) == 8:
+            # YYYYMMDD format
+            year = int(birth_date_str[:4])
+            month = int(birth_date_str[4:6])
+            day = int(birth_date_str[6:8])
+        else:
+            return 0
+
+        birth_date = date(year, month, day)
+        today = date.today()
+        age = (
+            today.year
+            - birth_date.year
+            - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        )
+        return age
+    except (ValueError, IndexError, TypeError):
+        pass
+    return 0
+
+
+async def get_patient_demographic_info_cached(patient_id: str) -> Dict[str, any]:
+    """Get patient demographic info with caching"""
+    # Clear expired cache entries
+    clear_expired_cache()
+
+    # Check if we have cached data and it's not expired
+    if patient_id in _patient_info_cache:
+        cached_time = _cache_timestamp.get(patient_id)
+        if (
+            cached_time
+            and (datetime.now() - cached_time).total_seconds()
+            < CACHE_EXPIRY_HOURS * 3600
+        ):
+            return _patient_info_cache[patient_id]
+
+    try:
+        # Try to get demographic info from DEMOGRAPHIC survey first
+        demographic_data = await firebase_service.get_patient_demographic_info(
+            patient_id
+        )
+
+        if demographic_data:
+            # Extract information from demographic survey responses
+            name = (
+                demographic_data.get("name")
+                or demographic_data.get("이름")
+                or demographic_data.get("환자명")
+                or f"Patient {patient_id}"
+            )
+
+            # Handle gender field variations
+            gender_raw = (
+                demographic_data.get("gender")
+                or demographic_data.get("성별")
+                or demographic_data.get("sex")
+                or "Unknown"
+            )
+
+            # Convert Korean gender values to English
+            if gender_raw == "남" or gender_raw == "남성":
+                gender = "남성"
+            elif gender_raw == "여" or gender_raw == "여성":
+                gender = "여성"
+            else:
+                gender = gender_raw
+
+            # Calculate age from birth date if available
+            age = 0
+            birth_date = (
+                demographic_data.get("birth_date")
+                or demographic_data.get("date_of_birth")
+                or demographic_data.get("생년월일")
+                or demographic_data.get("birthDate")
+            )
+
+            if birth_date:
+                age = calculate_age_from_birth_date(str(birth_date))
+
+            result = {
+                "name": name,
+                "age": age,
+                "gender": gender,
+                "birth_date": birth_date,
+            }
+        else:
+            # Fallback to user profile if no demographic survey
+            try:
+                profile = await firebase_service.get_user_profile(patient_id)
+                demographic_info = (
+                    profile.get("demographic_info", {}) if profile else {}
+                )
+
+                result = {
+                    "name": demographic_info.get("name", f"Patient {patient_id}"),
+                    "age": demographic_info.get("age", 0),
+                    "gender": demographic_info.get("gender", "Unknown"),
+                    "birth_date": demographic_info.get("date_of_birth"),
+                }
+            except:
+                result = {
+                    "name": f"Patient {patient_id}",
+                    "age": 0,
+                    "gender": "Unknown",
+                    "birth_date": None,
+                }
+
+        # Cache the result with timestamp
+        _patient_info_cache[patient_id] = result
+        _cache_timestamp[patient_id] = datetime.now()
+        return result
+
+    except Exception as e:
+        print(f"[DEBUG] Error getting demographic info for patient {patient_id}: {e}")
+        # Return fallback info
+        fallback = {
+            "name": f"Patient {patient_id}",
+            "age": 0,
+            "gender": "Unknown",
+            "birth_date": None,
+        }
+        _patient_info_cache[patient_id] = fallback
+        _cache_timestamp[patient_id] = datetime.now()
+        return fallback
+
+
+# New models for enhanced dashboard
+class PatientInfo(BaseModel):
+    patient_id: str
+    name: str
+    age: int
+    gender: str
+
+
+class AssessmentStatus(BaseModel):
+    status: str  # 'complete', 'in_progress', 'not_started'
+    last_completion_date: str = None
+
+
+class PatientAssessmentOverview(BaseModel):
+    patient_id: str
+    name: str
+    age: int
+    gender: str
+    essential_assessments: AssessmentStatus
+    elective_assessments: List[str]  # List of completed elective assessment names
+
+
+@router.get("/patients-overview", response_model=List[PatientAssessmentOverview])
+async def get_patients_overview(
+    current_user: TokenData = Depends(get_current_clinician),
+):
+    """
+    Retrieve enhanced patient overview with demographics and assessment status
+    Clinician-only endpoint with caching for improved performance
+    """
+    try:
+        # Get all patients' survey data
+        patients_data = await firebase_service.get_all_patients_surveys()
+
+        result = []
+        for patient_data in patients_data:
+            patient_id = patient_data["patient_id"]
+
+            # Get patient demographic info using cached function
+            demographic_info = await get_patient_demographic_info_cached(patient_id)
+
+            name = demographic_info.get("name", f"Patient {patient_id}")
+            age = demographic_info.get("age", 0)
+            gender = demographic_info.get("gender", "Unknown")
+
+            print(
+                f"[DEBUG] Patient {patient_id}: name={name}, age={age}, gender={gender}"
+            )
+
+            # Analyze assessment status
+            completed_surveys = set(
+                survey["survey_type"] for survey in patient_data["surveys"]
+            )
+
+            # Check essential assessment status
+            completed_required = sum(
+                1 for req in REQUIRED_ASSESSMENTS if req in completed_surveys
+            )
+            total_required = len(REQUIRED_ASSESSMENTS)
+
+            if completed_required == total_required:
+                essential_status = "complete"
+            elif completed_required > 0:
+                essential_status = "in_progress"
+            else:
+                essential_status = "not_started"
+
+            # Get last completion date for required assessments
+            last_completion_date = None
+            if completed_required > 0:
+                required_surveys = [
+                    s
+                    for s in patient_data["surveys"]
+                    if s["survey_type"] in REQUIRED_ASSESSMENTS
+                ]
+                if required_surveys:
+                    last_completion_date = max(
+                        s["submission_date"] for s in required_surveys
+                    )
+
+            # Get elective assessments (only those defined in ELECTIVE_ASSESSMENTS list)
+            elective_assessments = [
+                survey_type
+                for survey_type in completed_surveys
+                if survey_type in ELECTIVE_ASSESSMENTS
+            ]
+
+            patient_overview = PatientAssessmentOverview(
+                patient_id=patient_id,
+                name=name,
+                age=age,
+                gender=gender,
+                essential_assessments=AssessmentStatus(
+                    status=essential_status, last_completion_date=last_completion_date
+                ),
+                elective_assessments=elective_assessments,
+            )
+            result.append(patient_overview)
+
+        # Sort by last completion date (most recent first), then by status
+        def sort_key(patient):
+            completion_date = patient.essential_assessments.last_completion_date
+            status = patient.essential_assessments.status
+
+            # For complete patients, use actual completion date for sorting
+            # For others, use status priority with very old dates
+            if status == "complete" and completion_date:
+                # Convert to negative for reverse sorting (recent first)
+                return (0, completion_date)
+            elif status == "in_progress":
+                return (1, completion_date or "0000-00-00")
+            else:  # not_started
+                return (2, "0000-00-00")
+
+        # Sort with most recent completion dates first for completed assessments
+        result.sort(key=sort_key, reverse=True)
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get patients overview: {str(e)}"
+        )
 
 
 @router.get("/patients", response_model=List[PatientSurveyList])
@@ -41,6 +394,52 @@ async def get_patients_list(current_user: TokenData = Depends(get_current_clinic
         )
 
 
+@router.get("/patient/{patient_id}/trend-scales")
+async def get_patient_trend_scales(
+    patient_id: str,
+    current_user: TokenData = Depends(get_current_clinician),
+):
+    """
+    Get scales that have multiple submissions for a specific patient (for trend analysis)
+    Clinician-only endpoint
+    """
+    try:
+        # Get patient surveys
+        surveys = await firebase_service.get_patient_surveys(patient_id)
+
+        # Count surveys by type
+        survey_type_counts = {}
+        for survey in surveys:
+            survey_type = survey["survey_type"]
+            if survey_type.upper() not in ["DEMOGRAPHIC", "PAST_HISTORY"]:
+                survey_type_counts[survey_type] = (
+                    survey_type_counts.get(survey_type, 0) + 1
+                )
+
+        # Find scales with 2+ submissions
+        trend_scales = [
+            {"scale": survey_type, "count": count}
+            for survey_type, count in survey_type_counts.items()
+            if count >= 2
+        ]
+
+        # Get patient demographic info
+        demographic_info = await get_patient_demographic_info_cached(patient_id)
+
+        return {
+            "patient_id": patient_id,
+            "name": demographic_info.get("name", f"Patient {patient_id}"),
+            "age": demographic_info.get("age", 0),
+            "gender": demographic_info.get("gender", "Unknown"),
+            "trend_scales": trend_scales,
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get patient trend scales: {str(e)}"
+        )
+
+
 @router.get("/patient/{patient_id}/trends", response_model=TrendData)
 async def get_patient_trends(
     patient_id: str,
@@ -52,8 +451,14 @@ async def get_patient_trends(
     Clinician-only endpoint
     """
     try:
+        print(
+            f"[DEBUG] Getting trends for patient {patient_id}, survey_type: {survey_type}"
+        )
+
         # Get trend data from Firebase
         trend_data = await firebase_service.get_survey_trends(patient_id, survey_type)
+
+        print(f"[DEBUG] Found {len(trend_data) if trend_data else 0} trend data points")
 
         if not trend_data:
             raise HTTPException(
@@ -68,6 +473,7 @@ async def get_patient_trends(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"[ERROR] Exception in get_patient_trends: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to get patient trends: {str(e)}"
         )

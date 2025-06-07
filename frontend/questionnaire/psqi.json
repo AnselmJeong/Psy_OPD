@@ -8,7 +8,7 @@
         {
           "type": "text",
           "name": "hour_to_goto_sleep",
-          "title": "지난 한달 동안 보통 언제 잠자리에 드셨습니까",
+          "title": "지난 한달 동안 보통 밤 몇 시에 잠자리에 드셨습니까",
           "description": "잠든 시간이 아니라 잠자리에 들어간 시간을 입력해주세요.",
           "inputType": "time"
         },
@@ -23,15 +23,15 @@
             },
             {
               "value": "1",
-              "text": "15분 이상 30분 이내"
+              "text": "16~30분 이내"
             },
             {
               "value": "2",
-              "text": "30분 이상 1시간 이내"
+              "text": "31~60분 이내"
             },
             {
               "value": "3",
-              "text": "1시간 이상"
+              "text": "60분 이상"
             }
           ],
           "colCount": 2
@@ -39,14 +39,14 @@
         {
           "type": "text",
           "name": "wakeup_time",
-          "title": "지난 한달 동안 보통 언제 일어났습니까",
+          "title": "지난 한달 동안 보통 아침 몇 시에 일어났습니까",
           "description": "잠에서 깬 시간이 아니라 잠자리에서 일어난 시간을 입력해주세요.",
           "inputType": "time"
         },
         {
           "type": "text",
           "name": "sleep_duration",
-          "title": "지난 한달 동안 실제로 몇 시간 주무셨습니까?",
+          "title": "지난 한달 동안 밤에 실제로 몇 시간 잤습니까?",
           "inputType": "number",
           "min": 0,
           "max": 24
@@ -54,23 +54,23 @@
         {
           "type": "matrix",
           "name": "psqi_sleep_disturbances",
-          "title": "지난 한 달 동안 아래와 같은 이유로 잠을 자는 데 얼마나 자주 문제가 있었습니까?",
+          "title": "지난 한 달 동안 아래와 같은 이유로 잠을 자는 데 문제가 있었습니까?",
           "columns": [
             {
               "value": 0,
-              "text": "지난 한 달간 없었다"
+              "text": "지난 한 달간\n없었다"
             },
             {
               "value": 1,
-              "text": "주당 1회 이하"
+              "text": "주당 1회\n이하"
             },
             {
               "value": 2,
-              "text": "주당 1-2회"
+              "text": "주당\n1-2회"
             },
             {
               "value": 3,
-              "text": "주당 3회 이상"
+              "text": "주당\n3회 이상"
             }
           ],
           "rows": [
@@ -112,7 +112,7 @@
             },
             {
               "value": "j",
-              "text": "기타 다른 이유 때문에 얼마나 잠드는데 문제가 있었습니까?"
+              "text": "다른 이유때문에 얼마나 자주 잠드는데 문제가 있었습니까?"
             }
           ],
           "alternateRows": true,
