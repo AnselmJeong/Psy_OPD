@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "sonner";
+import { StagewiseToolbar } from "@stagewise/toolbar-next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,6 +27,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const stagewiseConfig = {
+    plugins: []
+  };
+
   return (
     <html lang="en">
       <body
@@ -38,6 +43,9 @@ export default function RootLayout({
           </main>
           <Footer />
           <Toaster />
+          {process.env.NODE_ENV === 'development' && (
+            <StagewiseToolbar config={stagewiseConfig} />
+          )}
         </AuthProvider>
       </body>
     </html>
