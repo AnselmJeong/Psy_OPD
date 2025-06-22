@@ -50,6 +50,11 @@ export default function ReportPage() {
         );
         
         if (!response.ok) {
+          if (response.status === 404) {
+            // 검사 결과가 없는 경우
+            setError('검사결과가 없습니다');
+            return;
+          }
           throw new Error('보고서를 불러오는데 실패했습니다.');
         }
 
@@ -77,12 +82,47 @@ export default function ReportPage() {
   }
 
   if (error) {
+    const isNoDataError = error === '검사결과가 없습니다';
+    
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-destructive">{error}</p>
-        <Button onClick={() => window.location.reload()}>
-          다시 시도
-        </Button>
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📋</div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {isNoDataError ? '검사결과가 없습니다' : '오류가 발생했습니다'}
+              </h1>
+              <p className="text-gray-600 mb-6">
+                {isNoDataError 
+                  ? '아직 완료된 평가가 없습니다. 평가를 먼저 진행해 주세요.' 
+                  : error
+                }
+              </p>
+            </div>
+            
+            <div className="flex gap-4">
+              {isNoDataError ? (
+                <Button 
+                  onClick={() => router.push('/rating')}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  평가 시작하기
+                </Button>
+              ) : (
+                <Button onClick={() => window.location.reload()}>
+                  다시 시도
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={() => router.push('/rating')}
+              >
+                평가 페이지로 이동
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

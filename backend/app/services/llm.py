@@ -26,15 +26,15 @@ def call_llm_with_retry(payload, headers, max_retries=1):
         try:
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(API_URL, json=payload, headers=headers)
-                print(
-                    f"[DEBUG] Response status: {response.status_code} (attempt {attempt + 1})"
-                )
+                # print(
+                #     f"[DEBUG] Response status: {response.status_code} (attempt {attempt + 1})"
+                # )
                 if response.status_code != 200:
-                    print(f"[DEBUG] API Error: {response.text}")
+                    # print(f"[DEBUG] API Error: {response.text}")
                     continue
                 response_data = response.json()
-                print(f"[DEBUG] Response data keys: {response_data.keys()}")
-                print(f"[DEBUG] Response data: {response.text}")
+                # print(f"[DEBUG] Response data keys: {response_data.keys()}")
+                # print(f"[DEBUG] Response data: {response.text}")
                 if "candidates" in response_data and response_data["candidates"]:
                     candidate = response_data["candidates"][0]
                     if "content" in candidate and "parts" in candidate["content"]:
@@ -43,11 +43,11 @@ def call_llm_with_retry(payload, headers, max_retries=1):
                                 "text", ""
                             )
                             if text_response.strip():
-                                print(
-                                    f"[DEBUG] LLM response length: {len(text_response)}"
-                                )
+                                # print(
+                                #     f"[DEBUG] LLM response length: {len(text_response)}"
+                                # )
                                 return text_response
-                print("[DEBUG] No valid content in response (retrying if possible)")
+                # print("[DEBUG] No valid content in response (retrying if possible)")
         except Exception as e:
             print(f"[DEBUG] LLM 호출 실패 (attempt {attempt + 1}): {e}")
     return None
@@ -65,7 +65,7 @@ def generate_report(rating_result: dict, scale_name: str, score_interpretation: 
         Markdown formatted report
     """
     if not settings.GOOGLE_API_KEY:
-        print("[DEBUG] GOOGLE_API_KEY is not set")
+        # print("[DEBUG] GOOGLE_API_KEY is not set")
         return generate_fallback_report(scale_name, score_interpretation)
 
     # Build detailed prompt with all available data
@@ -133,14 +133,14 @@ def generate_report(rating_result: dict, scale_name: str, score_interpretation: 
     }
 
     try:
-        print(f"[DEBUG] Making request to {API_URL}")
+        # print(f"[DEBUG] Making request to {API_URL}")
         text_response = call_llm_with_retry(payload, headers, max_retries=1)
         if text_response:
             return (
                 text_response
                 + "\n\n\n\n주의: 이 보고서는 자동 생성된 보고서입니다. 보다 자세한 분석을 위해서는 전문의와 상담하시기 바랍니다."
             )
-        print("[DEBUG] No valid content in response after retry")
+        # print("[DEBUG] No valid content in response after retry")
         return generate_fallback_report(scale_name, score_interpretation)
     except Exception as e:
         print(f"[DEBUG] LLM 호출 실패: {e}")
@@ -186,7 +186,7 @@ def generate_total_summary(
             return cached_data["summary"]
 
     if not settings.GOOGLE_API_KEY:
-        print("[DEBUG] GOOGLE_API_KEY is not set")
+        # print("[DEBUG] GOOGLE_API_KEY is not set")
         return generate_fallback_total_summary(scale_summaries)
 
     # Use REST API directly for more reliable results
@@ -246,7 +246,7 @@ def generate_total_summary(
     }
 
     try:
-        print(f"[DEBUG] Making request to {API_URL}")
+        # print(f"[DEBUG] Making request to {API_URL}")
         text_response = call_llm_with_retry(payload, headers, max_retries=1)
         if text_response:
             # Cache the successful response

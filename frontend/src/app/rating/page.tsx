@@ -28,8 +28,11 @@ export default function RatingIndexPage() {
       const patientData = JSON.parse(localStorage.getItem('loggedInPatient') || '{}');
       const patientId = patientData.medicalRecordNumber;
       
+      // console.log('Patient data from localStorage:', patientData);
+      // console.log('Extracted patient ID:', patientId);
+      
       if (!patientId) {
-        console.log("No patient logged in, using localStorage fallback");
+        // console.log("No patient logged in, using localStorage fallback");
         // Fallback to localStorage if no patient logged in
         const completed = JSON.parse(localStorage.getItem('completedScales') || '[]');
         setCompletedScales(completed);
@@ -43,7 +46,7 @@ export default function RatingIndexPage() {
         // Fetch completed surveys directly from Firebase
         const completedFromFirebase = await getCompletedSurveys(patientId);
         
-        console.log('Fetched from Firebase:', completedFromFirebase);
+        // console.log('Fetched from Firebase:', completedFromFirebase);
         setCompletedScales(completedFromFirebase);
         
         // Update localStorage for consistency

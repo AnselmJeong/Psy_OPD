@@ -105,18 +105,18 @@ def interpret_rating_scale(
 if __name__ == "__main__":
     # Example 1: BDI
     result1 = interpret_rating_scale("BDI", 12)
-    print("BDI Result:", result1)
+    # print("BDI Result:", result1)
 
     # Example 2: AUDIT (requires gender)
     result2 = interpret_rating_scale("AUDIT", 15, gender="남")
-    print("AUDIT Result (남):", result2)
+    # print("AUDIT Result (남):", result2)
 
     # Example 3: K-MDQ (requires additional condition)
     result3 = interpret_rating_scale(
         "K-MDQ", 8, additional_conditions={"simultaneity": "예"}
     )
-    print("K-MDQ Result:", result3)
+    # print("K-MDQ Result:", result3)
 
     # Example 4: OCI-R
     result4 = interpret_rating_scale("OCI-R", 25)
-    print("OCI-R Result:", result4)
+    # print("OCI-R Result:", result4)

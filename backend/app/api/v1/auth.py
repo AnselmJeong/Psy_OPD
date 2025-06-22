@@ -187,6 +187,22 @@ async def patient_login(request: PatientLoginRequest):
         if patient_doc.exists:
             stored_data = patient_doc.to_dict()
             if stored_data.get("password") == request.password:
+                # Check if user profile exists in users collection, create if not
+                user_profile = await firebase_service.get_user_profile(
+                    request.medicalRecordNumber
+                )
+                if not user_profile:
+                    user_data = {
+                        "user_id": request.medicalRecordNumber,
+                        "user_type": "patient",
+                        "password": request.password,
+                        "medicalRecordNumber": request.medicalRecordNumber,
+                        "created_at": firestore.SERVER_TIMESTAMP,
+                    }
+                    await firebase_service.create_user_profile(
+                        request.medicalRecordNumber, user_data
+                    )
+
                 # Create a token for the patient
                 import jwt
                 from app.config.settings import settings
@@ -199,7 +215,7 @@ async def patient_login(request: PatientLoginRequest):
             else:
                 return {"success": False, "message": "Invalid password"}
         else:
-            # New patient, store credentials
+            # New patient, store credentials in both collections
             patient_ref.set(
                 {
                     "medicalRecordNumber": request.medicalRecordNumber,
@@ -207,6 +223,19 @@ async def patient_login(request: PatientLoginRequest):
                     "createdAt": firestore.SERVER_TIMESTAMP,
                 }
             )
+
+            # Also create user profile in users collection
+            user_data = {
+                "user_id": request.medicalRecordNumber,
+                "user_type": "patient",
+                "password": request.password,
+                "medicalRecordNumber": request.medicalRecordNumber,
+                "created_at": firestore.SERVER_TIMESTAMP,
+            }
+            await firebase_service.create_user_profile(
+                request.medicalRecordNumber, user_data
+            )
+
             # Create a token for the new patient
             import jwt
             from app.config.settings import settings

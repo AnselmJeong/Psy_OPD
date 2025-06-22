@@ -128,23 +128,64 @@ class FirebaseService:
     ) -> bool:
         """Create user profile in Firestore"""
         try:
+            print(f"[DEBUG] Creating user profile for user_id: {user_id}")
             user_data["created_at"] = firestore.SERVER_TIMESTAMP
             user_data["updated_at"] = firestore.SERVER_TIMESTAMP
             self.db.collection("users").document(user_id).set(user_data)
+            print(f"[DEBUG] Successfully created user profile for {user_id}")
             return True
         except Exception as e:
+            print(f"[DEBUG] Error creating user profile for {user_id}: {str(e)}")
             raise HTTPException(
                 status_code=400, detail=f"Failed to create user profile: {str(e)}"
             )
 
     async def get_user_profile(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Get user profile from Firestore"""
+        """Get user profile from Firestore - check both users and patients collections"""
         try:
+            print(f"[DEBUG] Getting user profile for user_id: {user_id}")
+
+            # First try users collection
             doc = self.db.collection("users").document(user_id).get()
             if doc.exists:
-                return doc.to_dict()
-            return None
+                profile_data = doc.to_dict()
+                print(
+                    f"[DEBUG] Found user profile in 'users' collection for {user_id}: {profile_data}"
+                )
+                return profile_data
+            else:
+                print(
+                    f"[DEBUG] No user profile found in 'users' collection for {user_id}"
+                )
+
+                # Try patients collection as fallback
+                patient_doc = self.db.collection("patients").document(user_id).get()
+                if patient_doc.exists:
+                    patient_data = patient_doc.to_dict()
+                    print(
+                        f"[DEBUG] Found patient data in 'patients' collection for {user_id}: {patient_data}"
+                    )
+
+                    # Convert patient data to user profile format
+                    profile_data = {
+                        "user_id": user_id,
+                        "user_type": "patient",
+                        "medicalRecordNumber": patient_data.get(
+                            "medicalRecordNumber", user_id
+                        ),
+                        "password": patient_data.get("password"),
+                        "created_at": patient_data.get("createdAt"),
+                        # Add demographic info if available
+                        "demographic_info": patient_data.get("demographic_info", {}),
+                    }
+                    return profile_data
+                else:
+                    print(
+                        f"[DEBUG] No profile found in either 'users' or 'patients' collections for {user_id}"
+                    )
+                    return None
         except Exception as e:
+            print(f"[DEBUG] Error getting user profile for {user_id}: {str(e)}")
             raise HTTPException(
                 status_code=400, detail=f"Failed to get user profile: {str(e)}"
             )
@@ -201,42 +242,114 @@ class FirebaseService:
         survey_type: Optional[str] = None,
         date_filter: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Get surveys for a specific patient from both required and elective subcollections"""
+        """Get surveys for a specific patient - check both surveys and patients collections"""
         try:
-            categories = ["required", "elective"]
+            print(f"[DEBUG] Getting surveys for patient_id: {patient_id}")
             all_results: List[Dict[str, Any]] = []
 
+            # Method 1: Try surveys/{patient_id}/{required|elective} structure
+            categories = ["required", "elective"]
             for category in categories:
-                col_ref = (
-                    self.db.collection("surveys")
-                    .document(patient_id)
-                    .collection(category)
-                )
+                try:
+                    col_ref = (
+                        self.db.collection("surveys")
+                        .document(patient_id)
+                        .collection(category)
+                    )
 
-                query = col_ref
-                if survey_type:
-                    query = query.where("survey_type", "==", survey_type)
+                    query = col_ref
+                    if survey_type:
+                        query = query.where("survey_type", "==", survey_type)
 
-                docs = query.stream()
-                for doc in docs:
-                    data = doc.to_dict()
-                    data["survey_id"] = doc.id
-                    data["category"] = category
-                    # Convert timestamp to ISO string for consistency
-                    if "submission_date" in data:
-                        if hasattr(data["submission_date"], "isoformat"):
-                            data["submission_date"] = data[
-                                "submission_date"
-                            ].isoformat()
-                        else:
-                            data["submission_date"] = str(data["submission_date"])
-                    all_results.append(data)
+                    docs = query.stream()
+                    for doc in docs:
+                        data = doc.to_dict()
+                        data["survey_id"] = doc.id
+                        data["category"] = category
+                        # Convert timestamp to ISO string for consistency
+                        if "submission_date" in data:
+                            if hasattr(data["submission_date"], "isoformat"):
+                                data["submission_date"] = data[
+                                    "submission_date"
+                                ].isoformat()
+                            else:
+                                data["submission_date"] = str(data["submission_date"])
+                        all_results.append(data)
+                except Exception as e:
+                    print(
+                        f"[DEBUG] Error getting {category} surveys from surveys collection: {e}"
+                    )
+
+            print(f"[DEBUG] Found {len(all_results)} surveys in surveys collection")
+
+            # Method 2: If no surveys found, try patients/{patient_id}/surveys structure
+            if not all_results:
+                try:
+                    patient_surveys_ref = (
+                        self.db.collection("patients")
+                        .document(patient_id)
+                        .collection("surveys")
+                    )
+
+                    query = patient_surveys_ref
+                    if survey_type:
+                        query = query.where("survey_type", "==", survey_type)
+
+                    docs = query.stream()
+                    for doc in docs:
+                        data = doc.to_dict()
+                        data["survey_id"] = doc.id
+                        # Convert timestamp to ISO string for consistency
+                        if "submission_date" in data:
+                            if hasattr(data["submission_date"], "isoformat"):
+                                data["submission_date"] = data[
+                                    "submission_date"
+                                ].isoformat()
+                            else:
+                                data["submission_date"] = str(data["submission_date"])
+                        all_results.append(data)
+
+                    print(
+                        f"[DEBUG] Found {len(all_results)} surveys in patients/{patient_id}/surveys"
+                    )
+                except Exception as e:
+                    print(
+                        f"[DEBUG] Error getting surveys from patients collection: {e}"
+                    )
+
+            # Method 3: If still no surveys found, check if surveys are stored directly in patient document
+            if not all_results:
+                try:
+                    patient_doc = (
+                        self.db.collection("patients").document(patient_id).get()
+                    )
+                    if patient_doc.exists:
+                        patient_data = patient_doc.to_dict()
+                        print(f"[DEBUG] Patient document data: {patient_data}")
+
+                        # Check if surveys are stored as a field in the patient document
+                        if "surveys" in patient_data and isinstance(
+                            patient_data["surveys"], list
+                        ):
+                            for survey in patient_data["surveys"]:
+                                if (
+                                    not survey_type
+                                    or survey.get("survey_type") == survey_type
+                                ):
+                                    all_results.append(survey)
+                            print(
+                                f"[DEBUG] Found {len(all_results)} surveys in patient document field"
+                            )
+                except Exception as e:
+                    print(f"[DEBUG] Error checking patient document: {e}")
 
             # Sort by submission_date descending
             all_results.sort(key=lambda x: x.get("submission_date", ""), reverse=True)
 
+            print(f"[DEBUG] Total surveys found: {len(all_results)}")
             return all_results
         except Exception as e:
+            print(f"[DEBUG] Error in get_patient_surveys: {str(e)}")
             raise HTTPException(
                 status_code=400, detail=f"Failed to get patient surveys: {str(e)}"
             )
